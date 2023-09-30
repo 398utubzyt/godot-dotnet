@@ -1,0 +1,34 @@
+<Project Sdk="Microsoft.Build.NoTargets/2.0.1">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+      
+    <PackageId>Godot.NET.Sdk</PackageId>
+    <Version>4.2.0</Version>
+    <Authors>Godot.NET Contributors</Authors>
+    <Company />
+    <Description>A GDExtension port of Godot's .NET functionality with the aim of being as compatible as possible.</Description>
+    <RepositoryUrl>https://github.com/398utubzyt/godot-dotnet/tree/main/Godot.NET/Godot.NET.Sdk</RepositoryUrl>
+    <PackageProjectUrl>$(RepositoryUrl)</PackageProjectUrl>
+    <PackageTags>MSBuildSdk</PackageTags>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+      
+    <EnableNETAnalyzers>False</EnableNETAnalyzers>
+    <AnalysisLevel>none</AnalysisLevel>
+    
+    <SuppressDependenciesWhenPacking>true</SuppressDependenciesWhenPacking>
+    <IncludeBuildOutput>false</IncludeBuildOutput>
+    <Configurations>Debug;Release;Editor_Debug;Editor_Release;Editor_Release</Configurations>
+  </PropertyGroup>
+
+  <ItemGroup>
+	<!-- Package Sdk\Sdk.props and Sdk\Sdk.targets file -->
+	<None Include="Sdk\Sdk.props" Pack="true" PackagePath="Sdk" />
+	<None Include="Sdk\Sdk.targets" Pack="true" PackagePath="Sdk" />
+	<!-- SdkPackageVersions.props -->
+	<None Include="..\SdkPackageVersions.props" Pack="true" PackagePath="Sdk">
+	</None>
+  </ItemGroup>
+
+</Project>
