@@ -1,0 +1,16 @@
+{
+  "profiles": {
+    "Generate Json Api": {
+      "commandName": "Project",
+      "commandLineArgs": "-o \"$(SolutionDir)GodotSharp/Generated\" -a \"$(SolutionDir)../gdextension/extension_api.json\""
+    },
+    "Generate Header Api": {
+      "commandName": "Project",
+      "commandLineArgs": "-o \"$(SolutionDir)GodotSharp/GdExtension/Generated\" -a \"$(SolutionDir)../gdextension/gdextension_interface.h\" -h"
+    },
+    "Generate Variant": {
+      "commandName": "Project",
+      "commandLineArgs": "-o \"$(SolutionDir)GodotSharp/Variant/Generated\" -v"
+    }
+  }
+}

@@ -1,0 +1,102 @@
+﻿{
+    "version": 3,
+    "configurePresets": [
+        {
+            "name": "linux-debug",
+            "displayName": "Linux Debug",
+            "description": "Target the Windows Subsystem for Linux (WSL) or a remote Linux system.",
+            "generator": "Ninja",
+            "binaryDir": "${sourceDir}/out/build/${presetName}",
+            "installDir": "${sourceDir}/out/install/${presetName}",
+            "cacheVariables": { "CMAKE_BUILD_TYPE": "Debug" },
+            "condition": {
+                "type": "equals",
+                "lhs": "${hostSystemName}",
+                "rhs": "Linux"
+            },
+            "vendor": { "microsoft.com/VisualStudioRemoteSettings/CMake/1.0": { "sourceDir": "$env{HOME}/.vs/$ms{projectDirName}" } }
+        },
+        {
+            "name": "macos-debug",
+            "displayName": "macOS Debug",
+            "description": "Target a remote macOS system.",
+            "generator": "Ninja",
+            "binaryDir": "${sourceDir}/out/build/${presetName}",
+            "installDir": "${sourceDir}/out/install/${presetName}",
+            "cacheVariables": { "CMAKE_BUILD_TYPE": "Debug" },
+            "condition": {
+                "type": "equals",
+                "lhs": "${hostSystemName}",
+                "rhs": "Darwin"
+            },
+            "vendor": { "microsoft.com/VisualStudioRemoteSettings/CMake/1.0": { "sourceDir": "$env{HOME}/.vs/$ms{projectDirName}" } }
+        },
+        {
+            "name": "windows-base",
+            "description": "Target Windows with the Visual Studio development environment.",
+            "hidden": true,
+            "generator": "Ninja",
+            "binaryDir": "${sourceDir}/out/build/${presetName}",
+            "installDir": "${sourceDir}/out/install/${presetName}",
+            "cacheVariables": {
+                "CMAKE_C_COMPILER": "cl.exe",
+                "CMAKE_CXX_COMPILER": "cl.exe"
+            },
+            "condition": {
+                "type": "equals",
+                "lhs": "${hostSystemName}",
+                "rhs": "Windows"
+            }
+        },
+        {
+            "name": "win64-editor",
+            "displayName": "Windows Editor",
+            "description": "Target Windows (64-bit) with the Visual Studio development environment. (Debug)",
+            "inherits": "windows-base",
+            "architecture": {
+                "value": "x64",
+                "strategy": "external"
+            },
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "RelWithDebInfo",
+                "GD_TOOLS": true
+            }
+        },
+        {
+            "name": "win64-template",
+            "displayName": "Windows Template",
+            "description": "Target Windows (64-bit) with the Visual Studio development environment. (RelWithDebInfo)",
+            "inherits": "win64-editor",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release",
+                "GD_TOOLS": false
+            }
+        },
+        {
+            "name": "win32-editor",
+            "displayName": "Windows 32-bit Editor",
+            "description": "Target Windows (32-bit) with the Visual Studio development environment. (Debug)",
+            "inherits": "windows-base",
+            "architecture": {
+                "value": "x86",
+                "strategy": "external"
+            },
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "RelWithDebInfo",
+                "GD_TOOLS": true
+            },
+            "hidden": true
+        },
+        {
+            "name": "win32-template",
+            "displayName": "Windows 32-bit Template",
+            "description": "Target Windows (32-bit) with the Visual Studio development environment. (RelWithDebInfo)",
+            "inherits": "win32-editor",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release",
+                "GD_TOOLS": false
+            },
+            "hidden": true
+        }
+    ]
+}

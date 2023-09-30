@@ -1,0 +1,168 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<ProjectGuid>{AEBF0036-DA76-4341-B651-A3F2856AB2FA}</ProjectGuid>
+		<OutputPath>bin/$(Configuration)</OutputPath>
+		<AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+		<RootNamespace>Godot</RootNamespace>
+		<TargetFramework>net8.0</TargetFramework>
+		<DocumentationFile>$(OutputPath)/$(AssemblyName).xml</DocumentationFile>
+		<EnableDefaultItems>false</EnableDefaultItems>
+		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+		<LangVersion>preview</LangVersion>
+		<GenerateRuntimeConfigurationFiles>true</GenerateRuntimeConfigurationFiles>
+
+		<!-- Disabled temporarily as it pollutes the warnings, but we need to document public APIs. -->
+		<NoWarn>CS1591</NoWarn>
+		<NoWarn>CS1573</NoWarn>
+		<NoWarn>CA1305</NoWarn>
+		<Configurations>Debug;Release;Editor_Debug;Editor_Release;Editor_Release</Configurations>
+	</PropertyGroup>
+	<PropertyGroup>
+		<Description>Custom Godot C# Core API with newer features cause I can't wait that long for future releases.</Description>
+		<Authors>Godot Engine contributors</Authors>
+
+		<PackageId>GodotSharp</PackageId>
+		<Version>4.2.0</Version>
+		<PackageVersion>$(PackageVersion_GodotSharp)</PackageVersion>
+		<RepositoryUrl>https://github.com/398utubzyt/godot-dotnet/tree/main/Godot.NET/GodotSharp</RepositoryUrl>
+		<PackageProjectUrl>$(RepositoryUrl)</PackageProjectUrl>
+		<PackageLicenseExpression>MIT</PackageLicenseExpression>
+
+		<!--GeneratePackageOnBuild>true</GeneratePackageOnBuild-->
+		<IncludeSymbols>true</IncludeSymbols>
+		<SymbolPackageFormat>snupkg</SymbolPackageFormat>
+	</PropertyGroup>
+	<ItemGroup>
+	  <Compile Include="Attributes\AssemblyHasClasses.cs" />
+	  <Compile Include="Attributes\ExportCategoryAttribute.cs" />
+	  <Compile Include="Attributes\ExportSubgroupAttribute.cs" />
+	  <Compile Include="Attributes\ExportGroupAttribute.cs" />
+	  <Compile Include="Attributes\Exports\ExportRangeAttribute.cs" />
+	  <Compile Include="Attributes\Exports\ExportPlaceholderAttribute.cs" />
+	  <Compile Include="Attributes\Exports\ExportNodePathAttribute.cs" />
+	  <Compile Include="Attributes\Exports\ExportMultiline.cs" />
+	  <Compile Include="Attributes\Exports\ExportGlobalDirAttribute.cs" />
+	  <Compile Include="Attributes\Exports\ExportGlobalFileAttribute.cs" />
+	  <Compile Include="Attributes\Exports\ExportFlags3DNavigationAttribute.cs" />
+	  <Compile Include="Attributes\Exports\ExportFlags3DPhysicsAttribute.cs" />
+	  <Compile Include="Attributes\Exports\ExportFlagsAvoidanceAttribute.cs" />
+	  <Compile Include="Attributes\Exports\ExportFlags3DRenderAttribute.cs" />
+	  <Compile Include="Attributes\Exports\ExportFlags2DRenderAttribute.cs" />
+	  <Compile Include="Attributes\Exports\ExportFlags2DPhysicsAttribute.cs" />
+	  <Compile Include="Attributes\Exports\ExportFlags2DNavigationAttribute.cs" />
+	  <Compile Include="Attributes\Exports\ExportFlagsAttribute.cs" />
+	  <Compile Include="Attributes\Exports\ExportFileAttribute.cs" />
+	  <Compile Include="Attributes\Exports\ExportExpEasingAttribute.cs" />
+	  <Compile Include="Attributes\Exports\ExportEnumAttribute.cs" />
+	  <Compile Include="Attributes\Exports\ExportDirAttribute.cs" />
+	  <Compile Include="Attributes\Exports\ExportColorNoAlphaAttribute.cs" />
+	  <Compile Include="Attributes\IconAttribute.cs" />
+	  <Compile Include="Attributes\ExportAttribute.cs" />
+	  <Compile Include="Attributes\InternalName.cs" />
+	  <Compile Include="Attributes\ToolAttribute.cs" />
+	  <Compile Include="Attributes\GlobalClassAttribute.cs" />
+	  <Compile Include="BiHashMap.cs" />
+	  <Compile Include="Extensions\EnumExtensions.cs" />
+	  <Compile Include="Extensions\SpanExtensions.cs" />
+	  <Compile Include="GdExtension\MemUtil.cs" />
+	  <Compile Include="Resource.cs" />
+	  <Compile Include="RefCounted.cs" />
+	  <Compile Include="NativeStructures\PhysicsServer3DExtensionMotionResult.cs" />
+	  <Compile Include="NativeStructures\PhysicsServer3DExtensionRayResult.cs" />
+	  <Compile Include="NativeStructures\PhysicsServer3DExtensionShapeRestInfo.cs" />
+	  <Compile Include="NativeStructures\ScriptLanguageExtensionProfilingInfo.cs" />
+	  <Compile Include="NativeStructures\PhysicsServer3DExtensionShapeResult.cs" />
+	  <Compile Include="NativeStructures\PhysicsServer2DExtensionShapeResult.cs" />
+	  <Compile Include="NativeStructures\PhysicsServer2DExtensionShapeRestInfo.cs" />
+	  <Compile Include="NativeStructures\PhysicsServer2DExtensionRayResult.cs" />
+	  <Compile Include="NativeStructures\PhysicsServer2DExtensionMotionResult.cs" />
+	  <Compile Include="NativeStructures\ObjectID.cs" />
+	  <Compile Include="NativeStructures\Glyph.cs" />
+	  <Compile Include="NativeStructures\CaretInfo.cs" />
+	  <Compile Include="NativeStructures\AudioFrame.cs" />
+	  <Compile Include="Plugin\CSharpLanguage.cs" />
+	  <Compile Include="Plugin\CSharpPlugin.cs" />
+	  <Compile Include="Plugin\TestResource.cs" />
+	  <Compile Include="Plugin\TestNode.cs" />
+	  <Compile Include="Plugin\CSharpScriptLoader.cs" />
+	  <Compile Include="Plugin\CSharpScript.cs" />
+	  <Compile Include="Extensions\IntPtrExtensions.cs" />
+	  <Compile Include="GdExtension\MethodHelper.cs" />
+	  <Compile Include="TypeDB.cs" />
+	  <Compile Include="ScriptDB.cs" />
+	  <Compile Include="SName.cs" />
+	  <Compile Include="CStringDB.cs" />
+	  <Compile Include="StringDB.cs" />
+	  <Compile Include="Variant\Callable.cs" />
+	  <Compile Include="Variant\Collections\VariantDictionary.cs" />
+	  <Compile Include="Variant\Collections\VariantArray.cs" />
+	  <Compile Include="Variant\NodePath.cs" />
+	  <Compile Include="Variant\StringName.cs" />
+	  <Compile Include="ClassDB.cs" />
+	  <Compile Include="Extensions\StringExtensions.cs" />
+	  <Compile Include="Extensions\ByteExtensions.cs" />
+	  <Compile Include="GD.cs" />
+	  <Compile Include="GdExtension\CallableCustomInfo.cs" />
+	  <Compile Include="GdExtension\CallError.cs" />
+	  <Compile Include="GdExtension\CallErrorType.cs" />
+	  <Compile Include="GdExtension\ClassCreationInfo.cs" />
+	  <Compile Include="GdExtension\ClassCreationInfo2.cs" />
+	  <Compile Include="GdExtension\ClassMethodArgumentMetadata.cs" />
+	  <Compile Include="GdExtension\ClassMethodFlags.cs" />
+	  <Compile Include="GdExtension\ClassMethodInfo.cs" />
+	  <Compile Include="GdExtension\GodotVersion.cs" />
+	  <Compile Include="GdExtension\Initialization.cs" />
+	  <Compile Include="GdExtension\InitializationLevel.cs" />
+	  <Compile Include="GdExtension\InstanceBindingCallbacks.cs" />
+	  <Compile Include="GdExtension\Main.cs" />
+	  <Compile Include="GdExtension\MethodInfo.cs" />
+	  <Compile Include="GdExtension\PropertyInfo.cs" />
+	  <Compile Include="GdExtension\ScriptInstanceInfo.cs" />
+	  <Compile Include="GdExtension\ScriptInstanceInfo2.cs" />
+	  <Compile Include="GodotObject.cs" />
+	  <Compile Include="GlobalUsings.cs" />
+	  <Compile Include="GdExtension\Methods.cs" />
+	  <Compile Include="Variant\Aabb.cs" />
+	  <Compile Include="Variant\Basis.cs" />
+	  <Compile Include="Variant\Color.cs" />
+	  <Compile Include="Variant\Colors.cs" />
+	  <Compile Include="Variant\Mathf.cs" />
+	  <Compile Include="Variant\MathfEx.cs" />
+	  <Compile Include="Variant\Plane.cs" />
+	  <Compile Include="Variant\Projection.cs" />
+	  <Compile Include="Variant\Quaternion.cs" />
+	  <Compile Include="Variant\Rect2.cs" />
+	  <Compile Include="Variant\Rect2I.cs" />
+	  <Compile Include="Variant\Rid.cs" />
+	  <Compile Include="Variant\Transform2D.cs" />
+	  <Compile Include="Variant\Transform3D.cs" />
+	  <Compile Include="Variant\Variant.cs" />
+	  <Compile Include="Variant\Vector2.cs" />
+	  <Compile Include="Variant\Vector2I.cs" />
+	  <Compile Include="Variant\Vector3.cs" />
+	  <Compile Include="Variant\Vector3I.cs" />
+	  <Compile Include="Variant\Vector4.cs" />
+	  <Compile Include="Variant\Vector4I.cs" />
+	
+	  <!-- Auto-generated Api -->
+	  <Compile Include="GdExtension\Generated\*.cs" />
+	  <Compile Include="Variant\Generated\*.cs" />
+	  <Compile Include="Generated\*.cs" />
+	</ItemGroup>
+	<PropertyGroup>
+		<DefineConstants>$(DefineConstants);GODOT</DefineConstants>
+		<DefineConstants Condition=" '$(GodotFloat64)' == 'true' ">REAL_T_IS_DOUBLE;$(DefineConstants)</DefineConstants>
+		<GenerateDocumentationFile>False</GenerateDocumentationFile>
+	</PropertyGroup>
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Editor_Debug|AnyCPU'">
+	  <DefineConstants>$(DefineConstants);GODOT;TOOLS</DefineConstants>
+	</PropertyGroup>
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Editor_Release|AnyCPU'">
+	  <DefineConstants>$(DefineConstants);GODOT;TOOLS</DefineConstants>
+	</PropertyGroup>
+	<ItemGroup>
+		<PackageReference Include="ReflectionAnalyzers" Version="0.1.22-dev" PrivateAssets="all" IncludeAssets="runtime; build; native; contentfiles; analyzers" />
+		<!--PackageReference Include="IDisposableAnalyzers" Version="3.4.13" PrivateAssets="all" IncludeAssets="runtime; build; native; contentfiles; analyzers" /-->
+	</ItemGroup>
+</Project>

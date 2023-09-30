@@ -1,0 +1,14 @@
+<Project>
+	<PropertyGroup>
+		<PackageVersion_GodotSharp>4.2.0</PackageVersion_GodotSharp>
+		<PackageVersion_Godot_NET_Sdk>4.2.0</PackageVersion_Godot_NET_Sdk>
+		<PackageVersion_Godot_Roslyn>4.2.0</PackageVersion_Godot_Roslyn>
+		<GodotVersionConstants>
+			GODOT4;GODOT4_1;GODOT4_2;
+
+			GODOT4_OR_GREATER;GODOT4_0_OR_GREATER;
+			GODOT4_1_OR_GREATER;GODOT4_1_0_OR_GREATER;GODOT4_1_1_OR_GREATER;GODOT4_1_2_OR_GREATER;GODOT4_1_3_OR_GREATER;
+			GODOT4_2_OR_GREATER;GODOT4_2_0_OR_GREATER;
+		</GodotVersionConstants>
+	</PropertyGroup>
+</Project>
