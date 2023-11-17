@@ -256,7 +256,7 @@ namespace Godot.Roslyn
                 .Replace("<", "(Of ")
                 .Replace(">", ")");
 
-        public static string? GodotVariantType(this INamedTypeSymbol symbol)
+        public static string GodotVariantType(this INamedTypeSymbol symbol)
         {
             switch (symbol.FullQualifiedNameOmitGlobal())
             {
@@ -267,6 +267,11 @@ namespace Godot.Roslyn
                 case "System.Int32":
                 case "System.Int64":
                 case "System.Int128":
+                case "System.UInt8":
+                case "System.UInt16":
+                case "System.UInt32":
+                case "System.UInt64":
+                case "System.UInt128":
                     return "Int";
                 case "System.Half":
                 case "System.Single":
@@ -334,6 +339,37 @@ namespace Godot.Roslyn
             }
 
             return "Nil";
+        }
+
+        public static string GodotNativeType(this INamedTypeSymbol symbol, out bool modify)
+        {
+            switch (symbol.FullQualifiedNameOmitGlobal())
+            {
+                case "System.Boolean":
+                    modify = true;
+                    return "byte";
+
+                case "System.String":
+                    modify = true;
+                    return "nint";
+
+                case "Godot.VariantDictionary":
+                    modify = true;
+                    return "Dictionary";
+                case "Godot.VariantArray":
+                    modify = true;
+                    return "Array";
+
+                default:
+                    if (symbol.IsGodotObject())
+                    {
+                        modify = true;
+                        return "nint";
+                    }
+
+                    modify = false;
+                    return symbol.FullQualifiedNameIncludeGlobal();
+            }
         }
 
         public static bool IsGodotObject(this INamedTypeSymbol symbol)

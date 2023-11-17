@@ -156,7 +156,7 @@ namespace Godot.Roslyn
 
         private static void AppendMethods(StringBuilder source, INamedTypeSymbol symbol)
         {
-            source.Append("protected override bool _Call(StringName method, ref Variant arg0, ref Variant ret)\n{\n");
+            source.Append("protected override bool _Call(StringName method, ref nint args, nint ret)\n{\n");
             ImmutableArray<ISymbol> callSymbols = symbol.GetMembers().Where(m => m.Kind == SymbolKind.Method && m is IMethodSymbol ms
                 && ms.DeclaredAccessibility == Accessibility.Public && !ms.IsStatic && !ms.IsImplicitlyDeclared
                 && !ms.IsExtern && !ms.IsGenericMethod).ToImmutableArray();
@@ -167,8 +167,13 @@ namespace Godot.Roslyn
                     .FirstOrDefault(attr => attr.AttributeClass?.IsGodotInternalNameAttribute() ?? false)?
                     .NamedArguments[0].Value.Value?.ToString() ?? msym.Name);
                 source.Append("\")\n{\n");
+                bool modify = false;
                 if (!msym.ReturnsVoid)
-                    source.Append("ret = ");
+                {
+                    source.Append("global::Godot.Interop.RefHelper.IntAsRef<");
+                    source.Append((msym.ReturnType as INamedTypeSymbol)?.GodotNativeType(out modify) ?? "nint");
+                    source.Append(">(ret) = ");
+                }
                 source.Append(msym.Name);
                 source.Append('(');
                 int i = 0;
@@ -178,15 +183,26 @@ namespace Godot.Roslyn
                         continue;
                     if (i > 0)
                         source.Append(", ");
-                    source.Append('(');
+                    source.Append("global::Godot.Interop.RefHelper.IntAsRef<");
                     source.Append(param.Type.FullQualifiedNameIncludeGlobal());
-                    source.Append(")(global::System.Runtime.CompilerServices.Unsafe.Add(ref arg0, ");
+                    source.Append(">(global::Godot.Interop.RefHelper.Add(ref args, ");
                     source.Append(i++);
-                    source.Append(')');
+                    source.Append("))");
                 }
-                source.Append(");\nreturn true;\n}\n");
+                source.Append(')');
+                if (modify)
+                {
+                    source.Append("global::Godot.Interop.RefHelper.IntAsRef<");
+                    switch (msym.ReturnType.SpecialType)
+                    {
+                        case SpecialType.System_Boolean:
+                            source.Append(" ? 1 : 0");
+                            break;
+                    }
+                }
+                source.Append(";\nreturn true;\n}\n");
             }
-            source.Append("return base._Call(method, ref arg0, ref ret);\n}\n");
+            source.Append("return base._Call(method, ref args, ret);\n}\n");
         }
     }
 }

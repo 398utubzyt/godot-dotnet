@@ -24,6 +24,7 @@ namespace Godot
                     Main.i.StringToUtf16Chars((nint)(&native), (ushort*)nstr, (long)len);
                     
                     ret = MemUtil.ToString(nstr, len);
+                    MemUtil.Free(nstr);
                 }
                 _map[native, native] = ret;
             }
@@ -37,7 +38,11 @@ namespace Godot
                 return native;
 
             // Create a new Godot string and add it to the BiHashMap.
-            unsafe { Main.i.StringNewWithLatin1Chars((nint)(&native), (byte*)CStringDB.Register(managed)); }
+            unsafe
+            {
+                fixed (char* chars = managed)
+                    Main.i.StringNewWithUtf16CharsAndLen((nint)(&native), (ushort*)chars, (long)managed.Length);
+            }
             if (native == nint.Zero)
                 throw new InsufficientMemoryException();
 
@@ -51,7 +56,7 @@ namespace Godot
             {
                 if (_dtor == null)
                     _dtor = (delegate* unmanaged[Cdecl]<nint, void>)Main.i.VariantGetPtrDestructor(VariantType.String);
-                _dtor(native);
+                _dtor((nint)(&native));
                 _map.Remove(native);
             }
         }

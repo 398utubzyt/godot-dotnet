@@ -136,7 +136,7 @@ namespace Godot
         public override string ToString()
             => SName.SearchOrCreate(this);
 
-        // Technically not supported, but it's faster than creating a new String every time so... :shrug:
+        // Technically not offically supported, but it's faster than creating a new String every time so... :shrug:
         [SLayout(SLayoutOpt.Sequential)]
         internal unsafe struct _Data
         {

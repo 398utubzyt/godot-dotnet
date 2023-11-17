@@ -54,6 +54,7 @@ global using VariantType = Godot.Variant.Type;
 global using VariantOp = Godot.Variant.Operator;
 
 global using Godot.GdExtension;
+global using Godot.Interop;
 
 global using PackedByteArray = byte[];
 global using PackedInt32Array = int[];

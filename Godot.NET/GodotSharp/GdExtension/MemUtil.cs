@@ -163,3 +163,44 @@ namespace Godot.GdExtension
             => (nuint)Unsafe.SizeOf<T>();
     }
 }
+
+
+// Different, more relevant namespace that so Godot.GdExtension isn't exposed.
+namespace Godot.Interop
+{
+    /// <summary>
+    /// Helper methods for manipulating <see langword="ref"/> types without having to use the <see langword="unsafe"/> keyword.
+    /// </summary>
+    /// <remarks>This is only used internally. It is not recommended to use this unless you know what you are doing.</remarks>
+    public static class RefHelper
+    {
+        /// <summary>
+        /// Increments the <see langword="ref"/> pointer by <paramref name="offset"/> elements.
+        /// </summary>
+        /// <typeparam name="T">The type of the reference.</typeparam>
+        /// <param name="value">The reference to increment.</param>
+        /// <param name="offset">The amount of elements to increment by.</param>
+        /// <returns>The offset reference.</returns>
+        [MImpl(MImplOpts.AggressiveInlining)]
+        public static ref T AddRef<T>(ref T value, nuint offset) where T : unmanaged
+            => ref MemUtil.AddRef(ref value, offset);
+        /// <summary>
+        /// Reinterprets a <see langword="ref"/> pointer as an <see cref="nint"/>.
+        /// </summary>
+        /// <typeparam name="T">The type of the reference.</typeparam>
+        /// <param name="value">The reference to reinterpret.</param>
+        /// <returns>The <see cref="nint"/> address of the reference.</returns>
+        [MImpl(MImplOpts.AggressiveInlining)]
+        public static nint RefAsInt<T>(ref T value) where T : unmanaged
+            => MemUtil.RefAsInt(ref value);
+        /// <summary>
+        /// Reinterprets a <see cref="nint"/> as a <see langword="ref"/> pointer.
+        /// </summary>
+        /// <typeparam name="T">The type of the reference.</typeparam>
+        /// <param name="value">The <see cref="nint"/> to reinterpret.</param>
+        /// <returns>The reference at the <see cref="nint"/> address.</returns>
+        [MImpl(MImplOpts.AggressiveInlining)]
+        public static ref T IntAsRef<T>(nint value) where T : unmanaged
+            => ref MemUtil.IntAsRef<T>(value);
+    }
+}

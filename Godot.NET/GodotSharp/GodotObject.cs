@@ -105,8 +105,8 @@ namespace Godot
         internal void __gdext_GetPropertyList(Span<PropertyInfo> info)
             => _GetPropertyList(info);
         [MImpl(MImplOpts.AggressiveInlining)]
-        internal void __gdext_Call(StringName method, ref Variant arg0, ref Variant ret)
-            => _Call(method, ref arg0, ref ret);
+        internal void __gdext_Call(StringName method, ref nint args, nint ret)
+            => _Call(method, ref args, ret);
         [MImpl(MImplOpts.AggressiveInlining)]
         internal bool __gdext_Set(StringName property, Variant value)
             => _Set(property, value);
@@ -130,7 +130,7 @@ namespace Godot
         protected virtual void _GetPropertyList(Span<PropertyInfo> info)
         {
         }
-        protected virtual void _Call(StringName method, ref Variant arg0, ref Variant ret)
+        protected virtual void _Call(StringName method, ref nint args, nint ret)
         {
         }
         protected virtual bool _Set(StringName property, Variant value)

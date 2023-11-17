@@ -247,34 +247,14 @@ namespace Godot
                 if ((nint)data == 0)
                     return;
 
-                ref Variant vargs = ref MemUtil.NullRef<Variant>();
+                ref nint vargs = ref MemUtil.NullRef<nint>();
                 if (args != null)
-                    vargs = ref **(Variant**)args;
-                ref Variant vret = ref MemUtil.NullRef<Variant>();
-                if (ret != 0)
-                    vret = ref *(Variant*)ret;
+                    vargs = ref *args;
 
                 Instance<GodotObject>(managed)?.__gdext_Call(
                     new StringName(*(nint*)name),
                     ref vargs,
-                    ref vret);
-            }
-            [UnmanagedCallersOnly]
-            public static unsafe void Call(nint managed, nint name, nint* args, nint ret)
-            {
-                //Instance<GodotObject>(managed)?.CallPtr(new StringName(*(nint*)name), (Variant**)args, (Variant*)ret);
-
-                ref Variant vargs = ref MemUtil.NullRef<Variant>();
-                if (args != null)
-                    vargs = ref **(Variant**)args;
-                ref Variant vret = ref MemUtil.NullRef<Variant>();
-                if (ret != 0)
-                    vret = ref *(Variant*)ret;
-
-                Instance<GodotObject>(managed)?.__gdext_Call(
-                    new StringName(*(nint*)name),
-                    ref vargs,
-                    ref vret);
+                    ret);
             }
             [UnmanagedCallersOnly]
             public static unsafe byte Set(nint managed, nint name, nint value)

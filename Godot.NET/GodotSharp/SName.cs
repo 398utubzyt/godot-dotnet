@@ -18,23 +18,6 @@ namespace Godot
             if (!_map.TryGet((nint)name, out string ret))
             {
                 // Make new System.String if one does not exist for this StringName.
-
-                /*
-                // **I DON'T LIKE THIS**
-                // Potentially 3 allocations could be made here.
-                // This branch should be avoided at all costs until getting the
-                // string pointer directly is supported by the API.
-                unsafe
-                {
-                    if (_strCtor == null)
-                        _strCtor = (delegate* unmanaged[Cdecl]<nint, nint*, void>)Main.i.VariantGetPtrConstructor(VariantType.String, 2);
-                    nint native;
-                    _strCtor((nint)(&native), (nint*)&name);
-
-                    ret = StringDB.SearchOrCreate(native);
-                }
-                */
-
                 unsafe { ret = ((StringName._Data*)(nint)name)->ToString(); }
                 _map[(nint)name, name] = ret;
             }

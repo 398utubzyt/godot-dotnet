@@ -132,35 +132,35 @@
                 method == "_frame";
         }
 
-        protected override void _Call(StringName method, ref Variant arg0, ref Variant ret)
+        protected override void _Call(StringName method, ref nint args, nint ret)
         {
             if (method == "_create_script")
             {
-                ret = _CreateScript();
+                MemUtil.IntAsRef<nint>(ret) = (nint)_CreateScript();
                 return;
             }
 
             if (method == "_get_name")
             {
-                ret = _GetName();
+                MemUtil.IntAsRef<nint>(ret) = StringDB.Register(_GetName());
                 return;
             }
 
             if (method == "_supports_documentation")
             {
-                ret = _SupportsDocumentation();
+                MemUtil.IntAsRef<byte>(ret) = _SupportsDocumentation().ToExtBool();
                 return;
             }
 
             if (method == "_get_extension")
             {
-                ret = _GetExtension();
+                MemUtil.IntAsRef<nint>(ret) = StringDB.Register(_GetExtension());
                 return;
             }
 
             if (method == "_get_type")
             {
-                ret = _GetType();
+                MemUtil.IntAsRef<nint>(ret) = StringDB.Register(_GetType());
                 return;
             }
 
@@ -172,7 +172,7 @@
 
             if (method == "_handles_global_class_type")
             {
-                ret = _HandlesGlobalClassType(arg0.StringName);
+                MemUtil.IntAsRef<byte>(ret) = _HandlesGlobalClassType(StringDB.SearchOrCreate(MemUtil.IntAsRef<nint>(args))).ToExtBool();
                 return;
             }
 
