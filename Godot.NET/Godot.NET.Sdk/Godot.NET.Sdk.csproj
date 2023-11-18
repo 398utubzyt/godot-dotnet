@@ -4,7 +4,7 @@
     <TargetFramework>net8.0</TargetFramework>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
       
-    <PackageId>Godot.NET.Sdk</PackageId>
+    <PackageId>Godot.Extension.Sdk</PackageId>
     <Version>4.2.0</Version>
     <Authors>Godot.NET Contributors</Authors>
     <Company />
@@ -29,6 +29,11 @@
 	<!-- SdkPackageVersions.props -->
 	<None Include="..\SdkPackageVersions.props" Pack="true" PackagePath="Sdk">
 	</None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Godot.Roslyn\Godot.Roslyn.csproj" />
+    <ProjectReference Include="..\GodotSharp\GodotSharp.csproj" />
   </ItemGroup>
 
 </Project>

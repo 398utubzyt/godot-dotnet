@@ -8,7 +8,6 @@ namespace Godot
     internal static class SName
     {
         private static readonly BiHashMap<StringName, string> _map = new BiHashMap<StringName, string>();
-        private static unsafe delegate* unmanaged[Cdecl]<nint, nint*, void> _strCtor;
 
         public static string SearchOrCreate(StringName name)
         {

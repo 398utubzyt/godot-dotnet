@@ -4,7 +4,7 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace Godot
 {
-    public static class GD
+    public static partial class GD
     {
         internal static unsafe void PrintWarning(string description, string function, string file, int line, bool editorNotify)
         {

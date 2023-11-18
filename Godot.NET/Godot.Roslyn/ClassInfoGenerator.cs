@@ -55,8 +55,7 @@ namespace Godot.Roslyn
 
             var source = new StringBuilder();
 
-            source.Append("using Godot;\n");
-            source.Append("\n");
+            source.Append("using Godot;\nusing System;\n\n");
 
             if (hasNamespace)
             {
@@ -149,17 +148,32 @@ namespace Godot.Roslyn
                     }
                 }
 
-                source.Append(" };");
+                source.Append(" };\n");
             }
-            source.Append("\n}\n");
+            source.Append("}\n");
         }
 
         private static void AppendMethods(StringBuilder source, INamedTypeSymbol symbol)
         {
-            source.Append("protected override bool _Call(StringName method, ref nint args, nint ret)\n{\n");
+            source.Append("private static bool _CanCall(StringName method)\n{\nreturn\n");
+            if (!symbol.HasAttribute(ClassNames.ToolAttr))
+                source.Append("#if TOOLS\nEngine.IsEditorHint() &&\n#endif\n");
+
             ImmutableArray<ISymbol> callSymbols = symbol.GetMembers().Where(m => m.Kind == SymbolKind.Method && m is IMethodSymbol ms
                 && ms.DeclaredAccessibility == Accessibility.Public && !ms.IsStatic && !ms.IsImplicitlyDeclared
                 && !ms.IsExtern && !ms.IsGenericMethod).ToImmutableArray();
+
+            source.Append('(');
+            for (int i = 0; i < callSymbols.Length; i++)
+            {
+                source.Append("method == \"");
+                source.Append(((IMethodSymbol)callSymbols[i]).InternalMethodName());
+                source.Append('\"');
+                if (i < callSymbols.Length - 1)
+                    source.Append(" ||\n");
+            }
+
+            source.Append(");\n}\nprotected override void _Call(StringName method, ref nint args, nint ret)\n{\n");
             foreach (IMethodSymbol msym in callSymbols)
             {
                 source.Append("if (method == \"");
@@ -185,9 +199,15 @@ namespace Godot.Roslyn
                         source.Append(", ");
                     source.Append("global::Godot.Interop.RefHelper.IntAsRef<");
                     source.Append(param.Type.FullQualifiedNameIncludeGlobal());
-                    source.Append(">(global::Godot.Interop.RefHelper.Add(ref args, ");
-                    source.Append(i++);
-                    source.Append("))");
+                    source.Append(">(");
+                    if (i != 0)
+                    {
+                        source.Append("global::Godot.Interop.RefHelper.AddRef(ref args, ");
+                        source.Append(i++);
+                        source.Append(')');
+                    } else
+                        source.Append("args");
+                    source.Append(')');
                 }
                 source.Append(')');
                 if (modify)
@@ -200,9 +220,9 @@ namespace Godot.Roslyn
                             break;
                     }
                 }
-                source.Append(";\nreturn true;\n}\n");
+                source.Append(";\nreturn;\n}\n");
             }
-            source.Append("return base._Call(method, ref args, ret);\n}\n");
+            source.Append("base._Call(method, ref args, ret);\n}\n");
         }
     }
 }

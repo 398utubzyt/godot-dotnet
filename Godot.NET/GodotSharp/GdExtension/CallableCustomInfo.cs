@@ -20,16 +20,16 @@
 		public unsafe void *CallableUserData;
 		public unsafe void *Token;
 
-		public GDExtensionObjectPtr Object;
+        public GDObjectInstanceID ObjectID;
 
-		public unsafe delegate* unmanaged[Cdecl]<GDExtensionCallableCustomCall> CallFunc;
-        public unsafe delegate* unmanaged[Cdecl]<GDExtensionCallableCustomIsValid> IsValidFunc;
-        public unsafe delegate* unmanaged[Cdecl]<GDExtensionCallableCustomFree> FreeFunc;
+        public unsafe delegate* unmanaged<void*, nint*, long, nint, CallError*, void> CallFunc;
+        public unsafe delegate* unmanaged<void*, byte> IsValidFunc;
+        public unsafe delegate* unmanaged<void*, void> FreeFunc;
 
-        public unsafe delegate* unmanaged[Cdecl]<GDExtensionCallableCustomHash> HashFunc;
-        public unsafe delegate* unmanaged[Cdecl]<GDExtensionCallableCustomEqual> EqualFunc;
-        public unsafe delegate* unmanaged[Cdecl]<GDExtensionCallableCustomLessThan> LessThanFunc;
+        public unsafe delegate* unmanaged<void*, uint> HashFunc;
+        public unsafe delegate* unmanaged<void*, void*, byte> EqualFunc;
+        public unsafe delegate* unmanaged<void*, void*, byte> LessThanFunc;
 
-        public unsafe delegate* unmanaged[Cdecl]<GDExtensionCallableCustomToString> ToStringFunc;
+        public unsafe delegate* unmanaged<void*, byte*, nint, void> ToStringFunc;
     }
 }

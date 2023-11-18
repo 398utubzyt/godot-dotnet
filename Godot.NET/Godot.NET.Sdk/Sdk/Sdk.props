@@ -9,8 +9,8 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <Configurations>Debug;Release</Configurations>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Configurations>Editor;Debug;Release</Configurations>
+    <Configuration Condition=" '$(Configuration)' == '' ">Editor</Configuration>
 
     <GodotProjectDir Condition=" '$(GodotProjectDir)' == '' ">$(MSBuildProjectDirectory)</GodotProjectDir>
     <GodotProjectDir>$([MSBuild]::EnsureTrailingSlash('$(GodotProjectDir)'))</GodotProjectDir>
@@ -47,13 +47,13 @@
   The Microsoft.NET.Sdk only understands of the Debug and Release configurations.
   We need to set the following properties manually for ExportDebug and ExportRelease.
   -->
-  <PropertyGroup Condition=" '$(Configuration)' == 'Debug' or '$(Configuration)' == 'Editor_Debug' ">
+  <PropertyGroup Condition=" '$(Configuration)' == 'Debug' or '$(Configuration)' == 'Editor' ">
     <DebugSymbols Condition=" '$(DebugSymbols)' == '' ">true</DebugSymbols>
     <Optimize Condition=" '$(Optimize)' == '' ">false</Optimize>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)' == 'Editor_Release' ">
+  <!--PropertyGroup Condition=" '$(Configuration)' == 'Editor_Release' ">
     <Optimize Condition=" '$(Optimize)' == '' ">true</Optimize>
-  </PropertyGroup>
+  </PropertyGroup-->
 
   <PropertyGroup>
     <GodotApiConfiguration Condition=" '$(Configuration)' != 'Editor_Release' ">Debug</GodotApiConfiguration>
@@ -98,7 +98,7 @@
     <!-- Editor_Debug also defines DEBUG like Debug does. -->
     <DefineConstants Condition=" '$(Configuration)' == 'Debug' ">$(DefineConstants);DEBUG</DefineConstants>
     <!-- Debug defines TOOLS to differentiate between Debug and Editor_Debug configurations. -->
-    <DefineConstants Condition=" '$(Configuration)' == 'Editor_Debug' ">$(DefineConstants);TOOLS</DefineConstants>
+    <DefineConstants Condition=" '$(Configuration)' == 'Editor' ">$(DefineConstants);TOOLS</DefineConstants>
 
     <DefineConstants>$(GodotDefineConstants);$(DefineConstants)</DefineConstants>
   </PropertyGroup>

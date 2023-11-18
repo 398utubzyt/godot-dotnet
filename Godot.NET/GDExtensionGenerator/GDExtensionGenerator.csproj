@@ -5,6 +5,7 @@
     <TargetFramework>net7.0</TargetFramework>
     <ApplicationManifest>win32_manifest.xml</ApplicationManifest>
     <Configurations>Debug;Release;Editor_Debug;Editor_Release;Editor_Release</Configurations>
+	<LangVersion>12</LangVersion>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Editor_Debug|AnyCPU'" />

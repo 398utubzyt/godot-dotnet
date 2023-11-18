@@ -111,6 +111,7 @@ namespace GDExtensionGenerator
         {
             public string Name;
             public string Type;
+            public string Meta;
         }
 
         private struct SignalInfo
@@ -142,6 +143,7 @@ namespace GDExtensionGenerator
             public bool IsVirtual;
             public ulong Hash;
             public string Return;
+            public string ReturnMeta;
             public List<ParameterInfo> Params;
 
             public int Index;
@@ -229,6 +231,36 @@ namespace GDExtensionGenerator
 
             MethodCorrectType(ref type, "Span<void>", "Span<byte>");
         }
+        private static void MethodFixTypeWithMeta(ref string type, string meta)
+        {
+            switch (meta)
+            {
+                case "double":
+                    MethodCorrectType(ref type, "float", "double");
+                    break;
+                case "int8":
+                    MethodCorrectType(ref type, "int", "sbyte");
+                    break;
+                case "int16":
+                    MethodCorrectType(ref type, "int", "short");
+                    break;
+                case "int64":
+                    MethodCorrectType(ref type, "int", "long");
+                    break;
+                case "uint8":
+                    MethodCorrectType(ref type, "int", "byte");
+                    break;
+                case "uint16":
+                    MethodCorrectType(ref type, "int", "ushort");
+                    break;
+                case "uint32":
+                    MethodCorrectType(ref type, "int", "uint");
+                    break;
+                case "uint64":
+                    MethodCorrectType(ref type, "int", "ulong");
+                    break;
+            }
+        }
         private static void MethodTypeToNative(ref string type)
         {
             MethodCorrectType(ref type, "string", "void*");
@@ -296,8 +328,11 @@ namespace GDExtensionGenerator
 
             string ret = info.Return?.StartsWith("const ") ?? false ? info.Return[6..] : info.Return;
             if (ret != null)
+            {
                 MethodFixType(ref ret);
-            else
+                if (info.ReturnMeta != null)
+                    MethodFixTypeWithMeta(ref ret, info.ReturnMeta);
+            } else
                 ret = "void";
             w.Write(ret);
             info.Return = ret;
@@ -329,6 +364,8 @@ namespace GDExtensionGenerator
                     type = info.Params[i].Type;
 
                 MethodFixType(ref type);
+                if (info.Params[i].Meta != null)
+                    MethodFixTypeWithMeta(ref type, info.Params[i].Meta);
 
                 w.Write(type);
                 w.Write(' ');
@@ -459,6 +496,7 @@ namespace GDExtensionGenerator
             w.Write(')');
             */
 
+            string[] csBuiltins = ["byte", "sbyte", "short", "ushort", "uint", "long", "ulong", "double"];
             // NEW METHOD
             switch (info.Params.Count)
             {
@@ -484,8 +522,7 @@ namespace GDExtensionGenerator
                         {
                             w.Write("nint __");
                             w.Write(info.Params[i].Name[0] == '@' ? info.Params[i].Name[1..] : info.Params[i].Name);
-                            w.Write(
-" = global::Godot.GdExtension.MemUtil.RefAsInt(ref ");
+                            w.Write(" = global::Godot.GdExtension.MemUtil.RefAsInt(ref ");
                             w.Write(info.Params[i].Name);
                             w.Write(".GetRef());\n");
 
@@ -514,6 +551,7 @@ namespace GDExtensionGenerator
 
                             if (builtins.Any((x) => p[i].Type.Equals(x["name"].ToString(), StringComparison.OrdinalIgnoreCase)) || 
                                 enums.Any((x) => p[i].Type.Equals(x["name"].ToString(), StringComparison.OrdinalIgnoreCase)) ||
+                                csBuiltins.Any((x) => p[i].Type.Equals(x, StringComparison.Ordinal)) ||
                                 p[i].Type.Contains('.') || p[i].Type == "Variant")
                             {
                                 // Is NOT a GodotObject, can safely get the address.
@@ -592,7 +630,8 @@ namespace GDExtensionGenerator
                     if (retType.EndsWith("[]"))
                         w.Write("Array");
                     else if (!retType.Contains('.') && !enums.Any((x) => retType.Equals(x["name"].ToString(), StringComparison.OrdinalIgnoreCase))
-                        && !builtins.Any((x) => retType.Equals(x["name"].ToString(), StringComparison.OrdinalIgnoreCase)) && retType != "Variant")
+                        && !builtins.Any((x) => retType.Equals(x["name"].ToString(), StringComparison.OrdinalIgnoreCase))
+                        && !csBuiltins.Any((x) => retType.Equals(x, StringComparison.Ordinal)) && retType != "Variant")
                         w.Write("Object");
 
                     w.Write('<');
@@ -693,12 +732,13 @@ namespace GDExtensionGenerator
                     method.IsVirtual = (bool)arr[i]["is_virtual"];
                     method.Hash = (ulong?)arr[i]["hash"] ?? 0;
                     method.Return = (string)arr[i]["return_value"]?["type"];
+                    method.ReturnMeta = (string)arr[i]["return_value"]?["meta"];
 
                     JToken[] p = arr[i]["arguments"]?.ToArray();
                     if (p != null)
                     {
                         for (int j = 0; j < p.Length; j++)
-                            method.Params.Add(new ParameterInfo() { Name = (string)p[j]["name"], Type = (string)p[j]["type"] });
+                            method.Params.Add(new ParameterInfo() { Name = (string)p[j]["name"], Type = (string)p[j]["type"], Meta = (string)p[j]["meta"] });
                     }
 
                     c.Methods.Add(method);

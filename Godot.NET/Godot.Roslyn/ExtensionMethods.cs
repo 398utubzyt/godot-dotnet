@@ -372,6 +372,13 @@ namespace Godot.Roslyn
             }
         }
 
+        public static string InternalMethodName(this IMethodSymbol method)
+        {
+            return method.GetAttributes()
+                    .FirstOrDefault(attr => attr.AttributeClass?.IsGodotInternalNameAttribute() ?? false)?
+                    .NamedArguments[0].Value.Value?.ToString() ?? method.Name;
+        }
+
         public static bool IsGodotObject(this INamedTypeSymbol symbol)
             => symbol.InheritsFrom("GodotSharp", ClassNames.GodotObject);
 

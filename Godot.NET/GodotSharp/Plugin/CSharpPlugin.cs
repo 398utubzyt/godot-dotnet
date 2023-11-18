@@ -12,15 +12,12 @@ namespace Godot
 
         public override void _EnablePlugin()
         {
-            
         }
 
         public override void _DisablePlugin()
         {
             
         }
-
-        public CSharpPlugin() : base(false) { }
     }
 }
 

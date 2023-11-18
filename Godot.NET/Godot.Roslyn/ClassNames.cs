@@ -10,6 +10,7 @@ namespace Godot.Roslyn
         public const string ExportSubgroupAttr = "Godot.ExportSubgroupAttribute";
         public const string InternalNameAttr = "Godot.InternalNameAttribute";
         public const string SignalAttr = "Godot.SignalAttribute";
+        public const string ToolAttr = "Godot.ToolAttribute";
         public const string MustBeVariantAttr = "Godot.MustBeVariantAttribute";
         public const string GodotClassNameAttr = "Godot.GodotClassNameAttribute";
         public const string GlobalClassAttr = "Godot.GlobalClassAttribute";
