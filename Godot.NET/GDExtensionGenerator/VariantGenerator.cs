@@ -9,10 +9,9 @@ namespace GDExtensionGenerator
             None,
             Pointer,
             String,
-            StringName,
         }
 
-        private static void GenForType(StreamWriter w, string type, string fulltype, string name, string variant, ConversionType conv = ConversionType.None)
+        private static void GenForType(StreamWriter w, string type, string fulltype, string data, string real, string name, string variant, ConversionType conv = ConversionType.None)
         {
             w.Write("        /// <summary> Tries to get the <see cref=\"");
             w.Write(type);
@@ -34,7 +33,7 @@ namespace GDExtensionGenerator
             w.Write(" x)\n            => new Variant(VariantType.");
             w.Write(variant);
             w.Write(", new UnionData() { _");
-            w.Write(type);
+            w.Write(data);
             w.Write(" = ");
             switch (conv)
             {
@@ -46,12 +45,10 @@ namespace GDExtensionGenerator
                     w.Write("(nint)StringDB.Register(x) });\n\n");
                     break;
 
-                case ConversionType.StringName:
-                    w.Write("(nint)SName.Register(x) });\n\n");
-                    break;
-
                 default:
-                    w.Write("x });\n\n");
+                    w.Write('(');
+                    w.Write(real);
+                    w.Write(")x });\n\n");
                     break;
             }
         }
@@ -64,33 +61,33 @@ namespace GDExtensionGenerator
             w.Write(GenPrelude);
             w.Write("    public partial struct Variant\n    {\n");
 
-            GenForType(w, "bool", "bool", "Bool", "Bool");
+            GenForType(w, "bool", "bool", "bool", "bool", "Bool", "Bool");
 
-            GenForType(w, "sbyte", "sbyte", "Int8", "Int");
-            GenForType(w, "short", "short", "Int16", "Int");
-            GenForType(w, "int", "int", "Int32", "Int");
-            GenForType(w, "long", "long", "Int64", "Int");
+            GenForType(w, "sbyte", "sbyte", "int", "long", "Int8", "Int");
+            GenForType(w, "short", "short", "int", "long", "Int16", "Int");
+            GenForType(w, "int", "int", "int", "long", "Int32", "Int");
+            GenForType(w, "long", "long", "int", "long", "Int64", "Int");
 
-            GenForType(w, "byte", "byte", "UInt8", "Int");
-            GenForType(w, "ushort", "ushort", "UInt16", "Int");
-            GenForType(w, "uint", "uint", "UInt32", "Int");
-            GenForType(w, "ulong", "ulong", "UInt64", "Int");
+            GenForType(w, "byte", "byte", "int", "long", "UInt8", "Int");
+            GenForType(w, "ushort", "ushort", "int", "long", "UInt16", "Int");
+            GenForType(w, "uint", "uint", "int", "long", "UInt32", "Int");
+            GenForType(w, "ulong", "ulong", "int", "long", "UInt64", "Int");
 
-            GenForType(w, "float", "float", "Float32", "Float");
-            GenForType(w, "double", "double", "Float64", "Float");
+            GenForType(w, "float", "float", "float", "double", "Float32", "Float");
+            GenForType(w, "double", "double", "float", "double", "Float64", "Float");
             
-            GenForType(w, "string", "string", "String", "String", ConversionType.String);
-            GenForType(w, "StringName", "Godot.StringName", "StringName", "StringName", ConversionType.StringName);
-            GenForType(w, "NodePath", "Godot.NodePath", "NodePath", "NodePath", ConversionType.StringName);
+            GenForType(w, "string", "string", "string", "string", "String", "String", ConversionType.String);
+            GenForType(w, "StringName", "Godot.StringName", "StringName", "StringName", "StringName", "StringName");
+            GenForType(w, "NodePath", "Godot.NodePath", "NodePath", "NodePath", "NodePath", "NodePath");
 
-            GenForType(w, "Vector2", "Godot.Vector2", "Vector2", "Vector2");
-            GenForType(w, "Vector3", "Godot.Vector3", "Vector3", "Vector3");
-            GenForType(w, "Vector4", "Godot.Vector4", "Vector4", "Vector4");
-            GenForType(w, "Vector2I", "Godot.Vector2I", "Vector2I", "Vector2I");
-            GenForType(w, "Vector3I", "Godot.Vector3I", "Vector3I", "Vector3I");
-            GenForType(w, "Vector4I", "Godot.Vector4I", "Vector4I", "Vector4I");
+            GenForType(w, "Vector2", "Godot.Vector2", "Vector2", "Vector2", "Vector2", "Vector2");
+            GenForType(w, "Vector3", "Godot.Vector3", "Vector3", "Vector3", "Vector3", "Vector3");
+            GenForType(w, "Vector4", "Godot.Vector4", "Vector4", "Vector4", "Vector4", "Vector4");
+            GenForType(w, "Vector2I", "Godot.Vector2I", "Vector2I", "Vector2I", "Vector2I", "Vector2I");
+            GenForType(w, "Vector3I", "Godot.Vector3I", "Vector3I", "Vector3I", "Vector3I", "Vector3I");
+            GenForType(w, "Vector4I", "Godot.Vector4I", "Vector4I", "Vector4I", "Vector4I", "Vector4I");
 
-            GenForType(w, "Color", "Godot.Color", "Color", "Color");
+            GenForType(w, "Color", "Godot.Color", "Color", "Color", "Color", "Color");
 
             w.Write("    }\n");
             w.Write(GenPostlude);

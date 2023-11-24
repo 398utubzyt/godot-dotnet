@@ -20,11 +20,18 @@ namespace Godot
                 unsafe
                 {
                     nuint len = (nuint)Main.i.StringToUtf16Chars((nint)(&native), null, long.MaxValue);
-                    char* nstr = MemUtil.Alloc<char>(len + 1);
-                    Main.i.StringToUtf16Chars((nint)(&native), (ushort*)nstr, (long)len);
-                    
-                    ret = MemUtil.ToString(nstr, len);
-                    MemUtil.Free(nstr);
+                    if (len < 2048)
+                    {
+                        char* nstr = stackalloc char[(int)(len + 1)];
+                        Main.i.StringToUtf16Chars((nint)(&native), (ushort*)nstr, (long)len);
+                        ret = MemUtil.ToString(nstr, len);
+                    } else
+                    {
+                        char* nstr = MemUtil.Alloc<char>(len + 1);
+                        Main.i.StringToUtf16Chars((nint)(&native), (ushort*)nstr, (long)len);
+                        ret = MemUtil.ToString(nstr, len);
+                        MemUtil.Free(nstr);
+                    }
                 }
                 _map[native, native] = ret;
             }
@@ -48,6 +55,25 @@ namespace Godot
 
             _map[native, native] = managed;
             return native;
+        }
+
+        // Avoid memory allocations where possible
+        public static void Placement(string managed, ref nint to)
+        {
+            if (MemUtil.IsNull(ref to))
+                return;
+
+            if (managed == null)
+            {
+                to = 0;
+                return;
+            }
+
+            unsafe
+            {
+                fixed (char* chars = managed)
+                    Main.i.StringNewWithUtf16CharsAndLen(MemUtil.RefAsInt(ref to), (ushort*)chars, (long)managed.Length);
+            }
         }
 
         public unsafe static void Unregister(string managed)

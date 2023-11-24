@@ -10,9 +10,10 @@ namespace Godot
         public struct PropertyInfo
         {
             public string Name;
-            public VariantType Type;
+            public string ClassName;
             public PropertyHint Hint;
             public string HintString;
+            public VariantType Type;
         }
 
         internal static StringName GetClass(nint native)
@@ -99,7 +100,7 @@ namespace Godot
 
         // Ideally these wouldn't be here, but reflection is also a pain...
         [MImpl(MImplOpts.AggressiveInlining)]
-        internal nuint __gdext_PropertyCount()
+        internal int __gdext_PropertyCount()
             => _PropertyCount();
         [MImpl(MImplOpts.AggressiveInlining)]
         internal void __gdext_GetPropertyList(Span<PropertyInfo> info)
@@ -123,7 +124,7 @@ namespace Godot
         internal bool __gdext_PropertyGetRevert(StringName property, ref Variant ret)
             => _PropertyGetRevert(property, ref ret);
 
-        protected virtual nuint _PropertyCount()
+        protected virtual int _PropertyCount()
         {
             return 0;
         }

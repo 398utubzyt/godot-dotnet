@@ -41,6 +41,9 @@ namespace Godot
         internal static unsafe RuntimeMethodHandle AsManagedMethodHandle(this IntPtr self)
             => RuntimeMethodHandle.FromIntPtr(self);
         [MImpl(MImplOpts.AggressiveInlining)]
+        internal static unsafe System.Reflection.MethodBase AsManagedMethodBase(this IntPtr self)
+            => System.Reflection.MethodBase.GetMethodFromHandle(RuntimeMethodHandle.FromIntPtr(self));
+        [MImpl(MImplOpts.AggressiveInlining)]
         internal static unsafe void* AsManagedFunctionPointer(this IntPtr self)
             => (void*)RuntimeMethodHandle.FromIntPtr(self).GetFunctionPointer();
     }

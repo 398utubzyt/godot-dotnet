@@ -264,13 +264,14 @@ namespace Godot
             [UnmanagedCallersOnly]
             public static unsafe byte Get(nint managed, nint name, nint value)
             {
-                return Instance<GodotObject>(managed)?.__gdext_Get(new StringName(*(nint*)name), ref **(Variant**)value).ToExtBool() ?? 0;
+                return Instance<GodotObject>(managed)?.__gdext_Get(new StringName(*(nint*)name), ref *(Variant*)value).ToExtBool() ?? 0;
             }
             [UnmanagedCallersOnly]
             public static unsafe byte ValidateProperty(nint managed, GdExtension.PropertyInfo* info)
             {
                 PropertyInfo pi = new PropertyInfo() { 
                     Name = *(nint*)info->Name == 0 ? SName.SearchOrCreate(*(StringName*)info->Name) : null,
+                    ClassName = *(nint*)info->ClassName == 0 ? SName.SearchOrCreate(*(StringName*)info->ClassName) : null,
                     Type = info->Type,
                     Hint = (Godot.PropertyHint)info->Hint,
                     HintString = *(nint*)info->HintString == 0 ? StringDB.SearchOrCreate(*(nint*)info->HintString) : null };
@@ -279,6 +280,7 @@ namespace Godot
                     return 0;
 
                 *(StringName*)info->Name = pi.Name != null ? SName.Register(pi.Name) : default;
+                *(StringName*)info->ClassName = pi.ClassName != null ? SName.Register(pi.ClassName) : default;
                 info->Type = pi.Type;
                 info->Hint = (uint)pi.Hint;
                 *(nint*)info->HintString = pi.HintString != null ? StringDB.Register(pi.HintString) : 0;
@@ -304,7 +306,7 @@ namespace Godot
                     return null;
                 }
 
-                nuint pcount = obj.__gdext_PropertyCount();
+                nuint pcount = (nuint)obj.__gdext_PropertyCount();
                 if (pcount == 0)
                 {
                     *count = 0;
@@ -313,15 +315,23 @@ namespace Godot
 
                 *count = (uint)pcount;
                 GdExtension.PropertyInfo* info = MemUtil.Alloc<GdExtension.PropertyInfo>(pcount);
+                // Shouldn't have to use heap allocations here,
+                // but C# doesn't allow stackalloc for "managed" types :(
                 Span<PropertyInfo> minfo = MemUtil.AsSpan(ref MemUtil.RefAlloc<PropertyInfo>(pcount), pcount);
 
                 obj.__gdext_GetPropertyList(minfo);
                 for (nuint i = 0; i < pcount; i++)
                 {
-                    *(StringName*)info[i].Name = SName.Register(minfo[(int)i].Name);
+                    info[i].Name = (nint)MemUtil.Alloc<StringName>(1);
+                    *(StringName*)info[i].Name = minfo[(int)i].Name != null ? SName.Register(minfo[(int)i].Name) : default;
+                    info[i].ClassName = (nint)MemUtil.Alloc<StringName>(1);
+                    *(StringName*)info[i].ClassName = minfo[(int)i].ClassName != null ? SName.Register(minfo[(int)i].ClassName) : default;
+                    info[i].HintString = (nint)MemUtil.Alloc<nint>(1);
+                    *(nint*)info[i].HintString = minfo[(int)i].HintString != null ? StringDB.Register(minfo[(int)i].HintString) : 0;
+
                     info[i].Type = minfo[(int)i].Type;
                     info[i].Hint = (uint)minfo[(int)i].Hint;
-                    *(nint*)info[i].HintString = StringDB.Register(minfo[(int)i].HintString);
+                    info[i].Usage = (uint)UsageFlags.Default;
                 }
 
                 MemUtil.Free(ref minfo.GetRef());
@@ -330,6 +340,21 @@ namespace Godot
             [UnmanagedCallersOnly]
             public static unsafe void FreePropertyList(nint managed, GdExtension.PropertyInfo* info)
             {
+                GodotObject obj = Instance<GodotObject>(managed);
+                if (obj == null)
+                    return;
+
+                nuint pcount = (nuint)obj.__gdext_PropertyCount();
+                if (pcount == 0)
+                    return;
+
+                for (nuint i = 0; i < pcount; i++)
+                {
+                    MemUtil.Free(info[i].Name);
+                    MemUtil.Free(info[i].ClassName);
+                    MemUtil.Free(info[i].HintString);
+                }
+
                 MemUtil.Free(info);
             }
 

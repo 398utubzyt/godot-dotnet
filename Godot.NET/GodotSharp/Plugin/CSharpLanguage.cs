@@ -142,7 +142,7 @@
 
             if (method == "_get_name")
             {
-                MemUtil.IntAsRef<nint>(ret) = StringDB.Register(_GetName());
+                StringDB.Placement(_GetName(), ref MemUtil.IntAsRef<nint>(ret));
                 return;
             }
 
@@ -154,13 +154,13 @@
 
             if (method == "_get_extension")
             {
-                MemUtil.IntAsRef<nint>(ret) = StringDB.Register(_GetExtension());
+                StringDB.Placement(_GetExtension(), ref MemUtil.IntAsRef<nint>(ret));
                 return;
             }
 
             if (method == "_get_type")
             {
-                MemUtil.IntAsRef<nint>(ret) = StringDB.Register(_GetType());
+                StringDB.Placement(_GetType(), ref MemUtil.IntAsRef<nint>(ret));
                 return;
             }
 

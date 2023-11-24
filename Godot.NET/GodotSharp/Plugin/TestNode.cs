@@ -44,7 +44,7 @@ namespace Godot
             return base._Notification(what, reversed);
         }
 
-        protected override nuint _PropertyCount()
+        protected override int _PropertyCount()
         {
             return 1;
         }
