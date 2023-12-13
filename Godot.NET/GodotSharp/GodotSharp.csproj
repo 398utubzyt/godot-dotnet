@@ -35,6 +35,7 @@
 	</PropertyGroup>
 	<ItemGroup>
 	  <Compile Include="Attributes\AssemblyHasClasses.cs" />
+	  <Compile Include="Attributes\PreloadAttribute.cs" />
 	  <Compile Include="Attributes\ExportCategoryAttribute.cs" />
 	  <Compile Include="Attributes\ExportSubgroupAttribute.cs" />
 	  <Compile Include="Attributes\ExportGroupAttribute.cs" />
@@ -44,13 +45,13 @@
 	  <Compile Include="Attributes\Exports\ExportMultiline.cs" />
 	  <Compile Include="Attributes\Exports\ExportGlobalDirAttribute.cs" />
 	  <Compile Include="Attributes\Exports\ExportGlobalFileAttribute.cs" />
-	  <Compile Include="Attributes\Exports\ExportFlags3DNavigationAttribute.cs" />
-	  <Compile Include="Attributes\Exports\ExportFlags3DPhysicsAttribute.cs" />
-	  <Compile Include="Attributes\Exports\ExportFlagsAvoidanceAttribute.cs" />
-	  <Compile Include="Attributes\Exports\ExportFlags3DRenderAttribute.cs" />
-	  <Compile Include="Attributes\Exports\ExportFlags2DRenderAttribute.cs" />
-	  <Compile Include="Attributes\Exports\ExportFlags2DPhysicsAttribute.cs" />
-	  <Compile Include="Attributes\Exports\ExportFlags2DNavigationAttribute.cs" />
+	  <Compile Include="Attributes\Exports\ExportLayers3DNavigationAttribute.cs" />
+	  <Compile Include="Attributes\Exports\ExportLayers3DPhysicsAttribute.cs" />
+	  <Compile Include="Attributes\Exports\ExportLayersAvoidanceAttribute.cs" />
+	  <Compile Include="Attributes\Exports\ExportLayers3DRenderAttribute.cs" />
+	  <Compile Include="Attributes\Exports\ExportLayers2DRenderAttribute.cs" />
+	  <Compile Include="Attributes\Exports\ExportLayers2DPhysicsAttribute.cs" />
+	  <Compile Include="Attributes\Exports\ExportLayers2DNavigationAttribute.cs" />
 	  <Compile Include="Attributes\Exports\ExportFlagsAttribute.cs" />
 	  <Compile Include="Attributes\Exports\ExportFileAttribute.cs" />
 	  <Compile Include="Attributes\Exports\ExportExpEasingAttribute.cs" />

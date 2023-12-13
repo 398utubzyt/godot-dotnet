@@ -3,6 +3,7 @@ using System.Collections.Immutable;
 using System.Linq;
 using System.Text;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Text;
 
@@ -99,81 +100,98 @@ namespace Godot.Roslyn
                 }
             }
 
-
             context.AddSource(uniqueHint, SourceText.From(source.ToString(), Encoding.UTF8));
         }
 
         private static void AppendExportedProperties(StringBuilder source, INamedTypeSymbol symbol)
         {
-            source.Append("protected override nuint _PropertyCount() => ");
+            source.Append("protected override int _PropertyCount() => ");
             ImmutableArray<ISymbol> exportPropSymbols = symbol.GetMembers().Where(
-                m => m.GetAttributes().Any(attr => attr.AttributeClass?.IsGodotExportAttribute() ?? false) &&
+                m => m.GetAttributes().Any(attr => attr.AttributeClass?.IsAnyGodotExportAttribute() ?? false) &&
                 (m.Kind == SymbolKind.Field || (m.Kind == SymbolKind.Property &&
                     ((IPropertySymbol)m).GetMethod != null && ((IPropertySymbol)m).SetMethod != null))).ToImmutableArray();
             source.Append(exportPropSymbols.Length);
             source.Append(";\nprotected override void _GetPropertyList(Span<PropertyInfo> info)\n{\n");
             for (int i = 0; i < exportPropSymbols.Length; i++)
             {
+                string symType;
+                INamedTypeSymbol typeSymbol;
+                if (exportPropSymbols[i] is IPropertySymbol propSym)
+                    symType = (typeSymbol = (INamedTypeSymbol)propSym.Type)!.GodotVariantType() ?? "Nil";
+                else if (exportPropSymbols[i] is IFieldSymbol fieldSym)
+                    symType = (typeSymbol = (INamedTypeSymbol)fieldSym.Type)!.GodotVariantType() ?? "Nil";
+                else
+                    continue;
+
                 source.Append("info[");
                 source.Append(i);
                 source.Append("] = new PropertyInfo() { Name = \"");
                 source.Append(exportPropSymbols[i].Name);
-                source.Append("\", Type = VariantType.");
-                if (exportPropSymbols[i] is IPropertySymbol propSym)
-                    source.Append((propSym.Type as INamedTypeSymbol)?.GodotVariantType() ?? "Nil");
-                else if (exportPropSymbols[i] is IFieldSymbol fieldSym)
-                    source.Append((fieldSym.Type as INamedTypeSymbol)?.GodotVariantType() ?? "Nil");
-                else
-                    source.Append("Nil");
+                source.Append("\", Type = Variant.Type.");
+                
+                source.Append(symType);
 
-                AttributeData expAttr = exportPropSymbols[i].GetAttributes().First(attr => attr.AttributeClass?.IsGodotExportAttribute() ?? false);
-                foreach (KeyValuePair<string, TypedConstant> param in expAttr.NamedArguments)
+                if (symType == "Object")
                 {
-                    switch (param.Key)
-                    {
-                        case "Hint":
-                            source.Append(", Hint = PropertyHint.");
-                            if (param.Value.Type?.FullQualifiedNameOmitGlobal() == "Godot.PropertyHint")
-                                source.Append(param.Value.Value?.ToString() ?? "None");
-                            else
-                                source.Append("None");
-                            break;
-                        case "HintString":
-                            source.Append(", HintString = ");
-                            if (param.Value.Type?.FullQualifiedNameOmitGlobal() == "System.String")
-                                source.Append(param.Value.Value?.ToString() ?? "null");
-                            else
-                                source.Append("null");
-                            break;
-                    }
+                    source.Append(", ClassName = \"");
+                    source.Append(typeSymbol.FullQualifiedNameOmitGlobal() == "Godot.GodotObject" ? "Object" : typeSymbol);
+                    source.Append('\"');
                 }
+                
+                AttributeData expAttr = exportPropSymbols[i].GetAttributes().First(attr => attr.AttributeClass?.IsSomeGodotExportAttribute() ?? false);
+                HandleExportProperty(source, typeSymbol, expAttr);
 
                 source.Append(" };\n");
             }
             source.Append("}\n");
         }
 
+        private static void HandleExportProperty(StringBuilder source, INamedTypeSymbol symbol, AttributeData data)
+        {
+            PropertyHint hint = data.GetPropertyHint();
+            PropertyExportExt ext = (PropertyExportExt)hint;
+            if (!System.Enum.IsDefined(typeof(PropertyHint), hint) && ext != PropertyExportExt.Export)
+                return;
+
+            if (!ExportAttributeHandler.GetPropertyInfo(data, symbol, ref hint, out string hintString))
+                return;
+
+            source.Append(", Hint = PropertyHint.");
+            source.Append(hint.ToString());
+            source.Append(", HintString = \"");
+            source.Append(hintString);
+            source.Append("\"");
+        }
+
         private static void AppendMethods(StringBuilder source, INamedTypeSymbol symbol)
         {
-            source.Append("private static bool _CanCall(StringName method)\n{\nreturn\n");
-            if (!symbol.HasAttribute(ClassNames.ToolAttr))
-                source.Append("#if TOOLS\nEngine.IsEditorHint() &&\n#endif\n");
+            source.Append("private static bool _CanCall(StringName method)\n{\nreturn");
 
             ImmutableArray<ISymbol> callSymbols = symbol.GetMembers().Where(m => m.Kind == SymbolKind.Method && m is IMethodSymbol ms
                 && ms.DeclaredAccessibility == Accessibility.Public && !ms.IsStatic && !ms.IsImplicitlyDeclared
                 && !ms.IsExtern && !ms.IsGenericMethod).ToImmutableArray();
 
-            source.Append('(');
-            for (int i = 0; i < callSymbols.Length; i++)
+            if (callSymbols.Length > 0)
             {
-                source.Append("method == \"");
-                source.Append(((IMethodSymbol)callSymbols[i]).InternalMethodName());
-                source.Append('\"');
-                if (i < callSymbols.Length - 1)
-                    source.Append(" ||\n");
-            }
+                if (!symbol.HasAttribute(ClassNames.ToolAttr))
+                    source.Append("\n#if TOOLS\nEngine.IsEditorHint() &&\n#endif\n");
 
-            source.Append(");\n}\nprotected override void _Call(StringName method, ref nint args, nint ret)\n{\n");
+                source.Append('(');
+                source.Append("method == \"");
+                source.Append(((IMethodSymbol)callSymbols[0]).InternalMethodName());
+                source.Append('\"');
+                for (int i = 1; i < callSymbols.Length; i++)
+                {
+                    source.Append(" ||\n");
+                    source.Append("method == \"");
+                    source.Append(((IMethodSymbol)callSymbols[i]).InternalMethodName());
+                    source.Append('\"');
+                }
+                source.Append(')');
+            } else
+                source.Append(" false");
+
+            source.Append(";\n}\nprotected override void _Call(StringName method, ref nint args, nint ret)\n{\n");
             foreach (IMethodSymbol msym in callSymbols)
             {
                 source.Append("if (method == \"");

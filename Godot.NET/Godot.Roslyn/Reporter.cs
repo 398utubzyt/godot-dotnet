@@ -222,5 +222,58 @@ namespace Godot.Roslyn
                 location,
                 location?.SourceTree?.FilePath));
         }
+
+        public static void ReportExportAttributeTypeArgumentIsNotPrimitive(
+            GeneratorExecutionContext context,
+            ISymbol typeArgSymbol,
+            ITypeSymbol typeSymbol
+        )
+        {
+            var locations = typeArgSymbol.Locations;
+            var location = locations.FirstOrDefault(l => l.SourceTree != null) ?? locations.FirstOrDefault();
+
+            string message = $"Export attribute type argument is not built-in primitive number type: " +
+                             $"'{typeSymbol.ToDisplayString()}'";
+
+            string description = $"{message}. Custom number types are not supported." +
+                                 " Change the type argument to a primitive such as 'int' or 'float'.";
+
+            context.ReportDiagnostic(Diagnostic.Create(
+                new DiagnosticDescriptor(id: "GD0107",
+                    title: message,
+                    messageFormat: message,
+                    category: "Usage",
+                    DiagnosticSeverity.Error,
+                    isEnabledByDefault: true,
+                    description),
+                location,
+                location?.SourceTree?.FilePath));
+        }
+
+        public static void ReportExportRangeDoesNotHaveMinMax(
+            GeneratorExecutionContext context,
+            ISymbol exportedSymbol
+        )
+        {
+            var locations = exportedSymbol.Locations;
+            var location = locations.FirstOrDefault(l => l.SourceTree != null) ?? locations.FirstOrDefault();
+
+            string message = $"Exported range on property does not have both minimum and maximum bounds: " +
+                             $"'{exportedSymbol.ToDisplayString()}'";
+
+            string description = $"{message}. Export range must include a minimum and maximum." +
+                                 " Set 'CanBeLess' or 'CanBeGreater' to 'true' if bounds are not needed.";
+
+            context.ReportDiagnostic(Diagnostic.Create(
+                new DiagnosticDescriptor(id: "GD0108",
+                    title: message,
+                    messageFormat: message,
+                    category: "Usage",
+                    DiagnosticSeverity.Error,
+                    isEnabledByDefault: true,
+                    description),
+                location,
+                location?.SourceTree?.FilePath));
+        }
     }
 }

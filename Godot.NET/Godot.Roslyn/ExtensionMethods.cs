@@ -59,6 +59,21 @@ namespace Godot.Roslyn
             disabledGenerators != null &&
             disabledGenerators.Split(';').Contains(generatorName));
 
+        public static bool InheritsFrom(this INamedTypeSymbol? symbol, string typeFullName)
+        {
+            while (symbol != null)
+            {
+                if (symbol.FullQualifiedNameOmitGlobal() == typeFullName)
+                {
+                    return true;
+                }
+
+                symbol = symbol.BaseType;
+            }
+
+            return false;
+        }
+
         public static bool InheritsFrom(this INamedTypeSymbol? symbol, string assemblyName, string typeFullName)
         {
             while (symbol != null)
@@ -81,7 +96,7 @@ namespace Godot.Roslyn
 
             while (symbol != null)
             {
-                if (symbol.ContainingAssembly?.Name == "GodotSharp")
+                if (symbol.ContainingAssembly?.Name == ClassNames.GodotAssembly)
                     return symbol;
 
                 symbol = symbol.BaseType;
@@ -118,7 +133,7 @@ namespace Godot.Roslyn
             var classTypeSymbol = sm.GetDeclaredSymbol(cds);
 
             if (classTypeSymbol?.BaseType == null
-                || !classTypeSymbol.BaseType.InheritsFrom("GodotSharp", ClassNames.GodotObject))
+                || !classTypeSymbol.BaseType.InheritsFrom(ClassNames.GodotAssembly, ClassNames.GodotObject))
             {
                 symbol = null;
                 return false;
@@ -260,24 +275,24 @@ namespace Godot.Roslyn
         {
             switch (symbol.FullQualifiedNameOmitGlobal())
             {
-                case "System.Boolean":
+                case "bool":
                     return "Bool";
-                case "System.Int8":
-                case "System.Int16":
-                case "System.Int32":
-                case "System.Int64":
+                case "sbyte":
+                case "short":
+                case "int":
+                case "long":
                 case "System.Int128":
-                case "System.UInt8":
-                case "System.UInt16":
-                case "System.UInt32":
-                case "System.UInt64":
+                case "byte":
+                case "ushort":
+                case "uint":
+                case "ulong":
                 case "System.UInt128":
                     return "Int";
                 case "System.Half":
-                case "System.Single":
-                case "System.Double":
+                case "float":
+                case "double":
                     return "Float";
-                case "System.String":
+                case "string":
                     return "String";
 
                 case "Godot.Vector2":
@@ -380,13 +395,124 @@ namespace Godot.Roslyn
         }
 
         public static bool IsGodotObject(this INamedTypeSymbol symbol)
-            => symbol.InheritsFrom("GodotSharp", ClassNames.GodotObject);
+            => symbol.InheritsFrom(ClassNames.GodotAssembly, ClassNames.GodotObject);
 
         public static bool IsGodotInternalNameAttribute(this INamedTypeSymbol symbol)
             => symbol.FullQualifiedNameOmitGlobal() == ClassNames.InternalNameAttr;
 
         public static bool IsGodotExportAttribute(this INamedTypeSymbol symbol)
-            => symbol.FullQualifiedNameOmitGlobal() == ClassNames.ExportAttr || symbol.InheritsFrom("GodotSharp", "Godot.ExportAttribute");
+            => symbol.FullQualifiedNameOmitGlobal() == ClassNames.ExportAttr || symbol.InheritsFrom("Godot.ExportAttribute");
+
+        public static bool IsBuiltinNumber(this ITypeSymbol symbol)
+            => symbol.SpecialType switch { 
+                SpecialType.System_SByte => true,
+                SpecialType.System_Byte => true,
+                SpecialType.System_Int16 => true,
+                SpecialType.System_Int32 => true,
+                SpecialType.System_Int64 => true,
+                SpecialType.System_UInt16 => true,
+                SpecialType.System_UInt32 => true,
+                SpecialType.System_UInt64 => true,
+                SpecialType.System_Single => true,
+                SpecialType.System_Double => true,
+                SpecialType.System_Decimal => true,
+                _ => false,
+            };
+
+        public static bool IsAnyGodotExportAttribute(this INamedTypeSymbol symbol)
+        {
+            string name = symbol.FullQualifiedNameOmitGlobal();
+            return name.Equals(ClassNames.ExportAttr, StringComparison.Ordinal) ||
+                name.Equals(ClassNames.ExportCategoryAttr, StringComparison.Ordinal) ||
+                name.Equals(ClassNames.ExportGroupAttr, StringComparison.Ordinal) ||
+                name.Equals(ClassNames.ExportSubgroupAttr, StringComparison.Ordinal) ||
+                name.Equals(ClassNames.ExportColorNoAlphaAttr, StringComparison.Ordinal) ||
+                name.Equals(ClassNames.ExportDirAttr, StringComparison.Ordinal) ||
+                name.Equals(ClassNames.ExportEnumAttr, StringComparison.Ordinal) ||
+                name.Equals(ClassNames.ExportExpEasingAttr, StringComparison.Ordinal) ||
+                name.Equals(ClassNames.ExportFileAttr, StringComparison.Ordinal) ||
+                name.Equals(ClassNames.ExportFlagsAttr, StringComparison.Ordinal) ||
+                name.Equals(ClassNames.ExportGlobalDirAttr, StringComparison.Ordinal) ||
+                name.Equals(ClassNames.ExportGlobalFileAttr, StringComparison.Ordinal) ||
+                name.Equals(ClassNames.ExportLayers2DNavigationAttr, StringComparison.Ordinal) ||
+                name.Equals(ClassNames.ExportLayers2DPhysicsAttr, StringComparison.Ordinal) ||
+                name.Equals(ClassNames.ExportLayers2DRenderAttr, StringComparison.Ordinal) ||
+                name.Equals(ClassNames.ExportLayers3DNavigationAttr, StringComparison.Ordinal) ||
+                name.Equals(ClassNames.ExportLayers3DPhysicsAttr, StringComparison.Ordinal) ||
+                name.Equals(ClassNames.ExportLayers3DRenderAttr, StringComparison.Ordinal) ||
+                name.Equals(ClassNames.ExportLayersAvoidanceAttr, StringComparison.Ordinal) ||
+                name.Equals(ClassNames.ExportMultilineAttr, StringComparison.Ordinal) ||
+                name.Equals(ClassNames.ExportNodePathAttr, StringComparison.Ordinal) ||
+                name.Equals(ClassNames.ExportPlaceholderAttr, StringComparison.Ordinal) ||
+                name.StartsWith(ClassNames.ExportRangeAttr, StringComparison.Ordinal);
+        }
+
+        public static bool IsSomeGodotExportAttribute(this INamedTypeSymbol symbol)
+        {
+            string name = symbol.FullQualifiedNameOmitGlobal();
+            return name.Equals(ClassNames.ExportAttr, StringComparison.Ordinal) ||
+                // name.Equals(ClassNames.ExportCategoryAttr, StringComparison.Ordinal) ||
+                // name.Equals(ClassNames.ExportGroupAttr, StringComparison.Ordinal) ||
+                // name.Equals(ClassNames.ExportSubgroupAttr, StringComparison.Ordinal) ||
+                name.Equals(ClassNames.ExportColorNoAlphaAttr, StringComparison.Ordinal) ||
+                name.Equals(ClassNames.ExportDirAttr, StringComparison.Ordinal) ||
+                name.Equals(ClassNames.ExportEnumAttr, StringComparison.Ordinal) ||
+                name.Equals(ClassNames.ExportExpEasingAttr, StringComparison.Ordinal) ||
+                name.Equals(ClassNames.ExportFileAttr, StringComparison.Ordinal) ||
+                name.Equals(ClassNames.ExportFlagsAttr, StringComparison.Ordinal) ||
+                name.Equals(ClassNames.ExportGlobalDirAttr, StringComparison.Ordinal) ||
+                name.Equals(ClassNames.ExportGlobalFileAttr, StringComparison.Ordinal) ||
+                name.Equals(ClassNames.ExportLayers2DNavigationAttr, StringComparison.Ordinal) ||
+                name.Equals(ClassNames.ExportLayers2DPhysicsAttr, StringComparison.Ordinal) ||
+                name.Equals(ClassNames.ExportLayers2DRenderAttr, StringComparison.Ordinal) ||
+                name.Equals(ClassNames.ExportLayers3DNavigationAttr, StringComparison.Ordinal) ||
+                name.Equals(ClassNames.ExportLayers3DPhysicsAttr, StringComparison.Ordinal) ||
+                name.Equals(ClassNames.ExportLayers3DRenderAttr, StringComparison.Ordinal) ||
+                name.Equals(ClassNames.ExportLayersAvoidanceAttr, StringComparison.Ordinal) ||
+                name.Equals(ClassNames.ExportMultilineAttr, StringComparison.Ordinal) ||
+                name.Equals(ClassNames.ExportNodePathAttr, StringComparison.Ordinal) ||
+                name.Equals(ClassNames.ExportPlaceholderAttr, StringComparison.Ordinal) ||
+                name.StartsWith(ClassNames.ExportRangeAttr, StringComparison.Ordinal);
+        }
+
+        public static bool IsGodotExportSectionAttribute(this INamedTypeSymbol symbol)
+        {
+            string name = symbol.FullQualifiedNameOmitGlobal();
+            return name.Equals(ClassNames.ExportCategoryAttr, StringComparison.Ordinal) ||
+                name.Equals(ClassNames.ExportGroupAttr, StringComparison.Ordinal) ||
+                name.Equals(ClassNames.ExportSubgroupAttr, StringComparison.Ordinal);
+        }
+
+        public static PropertyHint GetPropertyHint(this AttributeData data)
+        {
+            string name = data.AttributeClass!.FullQualifiedNameOmitGlobal();
+            return name switch
+            {
+                ClassNames.ExportAttr => (PropertyHint)PropertyExportExt.Export, // Resolve property hint elsewhere
+                ClassNames.ExportCategoryAttr => (PropertyHint)PropertyExportExt.Category,
+                ClassNames.ExportGroupAttr => (PropertyHint)PropertyExportExt.Group,
+                ClassNames.ExportSubgroupAttr => (PropertyHint)PropertyExportExt.Subgroup,
+                ClassNames.ExportColorNoAlphaAttr => PropertyHint.ColorNoAlpha,
+                ClassNames.ExportDirAttr => PropertyHint.Dir,
+                ClassNames.ExportEnumAttr => PropertyHint.Enum,
+                ClassNames.ExportExpEasingAttr => PropertyHint.ExpEasing,
+                ClassNames.ExportFileAttr => PropertyHint.File,
+                ClassNames.ExportFlagsAttr => PropertyHint.Flags,
+                ClassNames.ExportGlobalDirAttr => PropertyHint.GlobalDir,
+                ClassNames.ExportGlobalFileAttr => PropertyHint.GlobalFile,
+                ClassNames.ExportLayers2DNavigationAttr => PropertyHint.Layers2dNavigation,
+                ClassNames.ExportLayers2DPhysicsAttr => PropertyHint.Layers2dPhysics,
+                ClassNames.ExportLayers2DRenderAttr => PropertyHint.Layers2dRender,
+                ClassNames.ExportLayers3DNavigationAttr => PropertyHint.Layers3dNavigation,
+                ClassNames.ExportLayers3DPhysicsAttr => PropertyHint.Layers3dPhysics,
+                ClassNames.ExportLayers3DRenderAttr => PropertyHint.Layers3dRender,
+                ClassNames.ExportLayersAvoidanceAttr => PropertyHint.LayersAvoidance,
+                ClassNames.ExportMultilineAttr => PropertyHint.MultilineText,
+                ClassNames.ExportNodePathAttr => PropertyHint.NodePathValidTypes,
+                ClassNames.ExportPlaceholderAttr => PropertyHint.PlaceholderText,
+                _ => name.StartsWith(ClassNames.ExportRangeAttr) ? PropertyHint.Range : PropertyHint.None,
+            };
+        }
 
         public static bool IsGodotSignalAttribute(this INamedTypeSymbol symbol)
             => symbol.FullQualifiedNameOmitGlobal() == ClassNames.SignalAttr;
@@ -404,7 +530,7 @@ namespace Godot.Roslyn
             => symbol.FullQualifiedNameOmitGlobal() == ClassNames.SystemFlagsAttr;
 
         public static bool IsGodotAssembly(this IAssemblySymbol symbol)
-            => symbol.Identity.Name == "GodotSharp";
+            => symbol.Identity.Name == ClassNames.GodotAssembly;
 
         public static string Path(this Location location)
             => location.SourceTree?.GetLineSpan(location.SourceSpan).Path

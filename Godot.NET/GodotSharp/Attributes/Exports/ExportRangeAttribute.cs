@@ -1,120 +1,50 @@
 ﻿using System;
+using System.Numerics;
 
 namespace Godot
 {
-    [Flags]
-    public enum ExportRangeFlags
-    {
-        CanBeGreater = 1,
-        CanBeLess = 2,
-        Exponential = 4,
-        HideSlider = 8,
-        Degrees = 16,
-        Radians = 32,
-    }
-
     [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property, AllowMultiple = false, Inherited = true)]
-    public class ExportRangeAttribute : ExportAttribute
+    public class ExportRangeAttribute<T> : Attribute where T : unmanaged, INumber<T>
     {
-        public ExportRangeAttribute() : base(PropertyHint.Range, null)
-        {
-        }
-        public ExportRangeAttribute(int min, int max)
-            : base(PropertyHint.Range, $"{min},{max}")
-        {
-        }
-        public ExportRangeAttribute(int min, int max, bool canBeLesser, bool canBeGreater)
-            : base(PropertyHint.Range,
-                  $"{min},{max}{
-                      (canBeGreater ? ",or_greater" : string.Empty)}{
-                      (canBeLesser ? ",or_less" : string.Empty)}")
-        {
-        }
-        public ExportRangeAttribute(int min, int max, bool canBeLesser, bool canBeGreater, string suffix)
-            : base(PropertyHint.Range, 
-                  $"{min},{max}{
-                      (canBeGreater ? ",or_greater" : string.Empty)}{
-                      (canBeLesser ? ",or_less" : string.Empty)}{
-                      (string.IsNullOrWhiteSpace(suffix) ? $",suffix:{suffix}" : string.Empty)}")
-        {
-        }
-
-        public ExportRangeAttribute(float min, float max)
-            : base(PropertyHint.Range, $"{min},{max}")
-        {
-        }
-        public ExportRangeAttribute(float min, float max, float step)
-            : base(PropertyHint.Range, $"{min},{max},{step}")
-        {
-        }
-        public ExportRangeAttribute(float min, float max, float step, bool canBeLesser, bool canBeGreater)
-            : base(PropertyHint.Range,
-                  $"{min},{max},{step}{
-                      (canBeGreater ? ",or_greater" : string.Empty)}{
-                      (canBeLesser ? ",or_less" : string.Empty)}")
-        {
-        }
-        public ExportRangeAttribute(float min, float max, float step, ExportRangeFlags flags)
-            : base(PropertyHint.Range,
-                  $"{min},{max},{step}{
-                      (flags.FastHasFlag(ExportRangeFlags.CanBeGreater) ? ",or_greater" : string.Empty)}{
-                      (flags.FastHasFlag(ExportRangeFlags.CanBeLess) ? ",or_less" : string.Empty)}{
-                      (flags.FastHasFlag(ExportRangeFlags.Exponential) ? ",exp" : string.Empty)}{
-                      (flags.FastHasFlag(ExportRangeFlags.HideSlider) ? ",hide_slider" : string.Empty)}{
-                      (flags.FastHasFlag(ExportRangeFlags.Degrees) ? ",degrees" : 
-                      (flags.FastHasFlag(ExportRangeFlags.Radians) ? ",radians" : string.Empty))}")
-        {
-        }
-        public ExportRangeAttribute(float min, float max, float step, ExportRangeFlags flags, string suffix)
-            : base(PropertyHint.Range, 
-                  $"{min},{max},{step}{
-                      (flags.FastHasFlag(ExportRangeFlags.CanBeGreater) ? ",or_greater" : string.Empty)}{
-                      (flags.FastHasFlag(ExportRangeFlags.CanBeLess) ? ",or_less" : string.Empty)}{
-                      (flags.FastHasFlag(ExportRangeFlags.Exponential) ? ",exp" : string.Empty)}{
-                      (flags.FastHasFlag(ExportRangeFlags.HideSlider) ? ",hide_slider" : string.Empty)}{
-                      (flags.FastHasFlag(ExportRangeFlags.Degrees) ? ",degrees" : 
-                      (flags.FastHasFlag(ExportRangeFlags.Radians) ? ",radians" : string.Empty))}{
-                      (string.IsNullOrWhiteSpace(suffix) ? $",suffix:{suffix}" : string.Empty)}")
-        {
-        }
-
-        public ExportRangeAttribute(double min, double max)
-            : base(PropertyHint.Range, $"{min},{max}")
-        {
-        }
-        public ExportRangeAttribute(double min, double max, double step)
-            : base(PropertyHint.Range, $"{min},{max},{step}")
-        {
-        }
-        public ExportRangeAttribute(double min, double max, double step, bool canBeLesser, bool canBeGreater)
-            : base(PropertyHint.Range,
-                  $"{min},{max},{step}{
-                      (canBeGreater ? ",or_greater" : string.Empty)}{
-                      (canBeLesser ? ",or_less" : string.Empty)}")
-        {
-        }
-        public ExportRangeAttribute(double min, double max, double step, ExportRangeFlags flags)
-            : base(PropertyHint.Range,
-                  $"{min},{max},{step}{
-                      (flags.FastHasFlag(ExportRangeFlags.CanBeGreater) ? ",or_greater" : string.Empty)}{
-                      (flags.FastHasFlag(ExportRangeFlags.CanBeLess) ? ",or_less" : string.Empty)}{
-                      (flags.FastHasFlag(ExportRangeFlags.Exponential) ? ",exp" : string.Empty)}{
-                      (flags.FastHasFlag(ExportRangeFlags.HideSlider) ? ",hide_slider" : string.Empty)}{
-                      (flags.FastHasFlag(ExportRangeFlags.Degrees) ? ",degrees" : 
-                      (flags.FastHasFlag(ExportRangeFlags.Radians) ? ",radians" : string.Empty))}")
-        {
-        }
-        public ExportRangeAttribute(double min, double max, double step, ExportRangeFlags flags, string suffix)
-            : base(PropertyHint.Range, 
-                  $"{min},{max},{step}{
-                      (flags.FastHasFlag(ExportRangeFlags.CanBeGreater) ? ",or_greater" : string.Empty)}{
-                      (flags.FastHasFlag(ExportRangeFlags.CanBeLess) ? ",or_less" : string.Empty)}{
-                      (flags.FastHasFlag(ExportRangeFlags.Exponential) ? ",exp" : string.Empty)}{
-                      (flags.FastHasFlag(ExportRangeFlags.HideSlider) ? ",hide_slider" : string.Empty)}{
-                      (flags.FastHasFlag(ExportRangeFlags.Degrees) ? ",degrees" : 
-                      (flags.FastHasFlag(ExportRangeFlags.Radians) ? ",radians" : string.Empty))}{
-                      (string.IsNullOrWhiteSpace(suffix) ? $",suffix:{suffix}" : string.Empty)}")
-        {
-        }
+        /// <summary>
+        /// The minimum inclusive value.
+        /// </summary>
+        public T Min;
+        /// <summary>
+        /// The maximum inclusive value.
+        /// </summary>
+        public T Max;
+        /// <summary>
+        /// The step size from <see cref="Min"/> which the value will snap to in the editor.
+        /// </summary>
+        public T Step;
+        /// <summary>
+        /// <see langword="true"/> if the range should not have a minimum bound.
+        /// </summary>
+        public bool CanBeLess;
+        /// <summary>
+        /// <see langword="true"/> if the range should not have a maximum bound.
+        /// </summary>
+        public bool CanBeGreater;
+        /// <summary>
+        /// <see langword="true"/> if the range slider should be exponential instead of linear.
+        /// </summary>
+        public bool Exponential;
+        /// <summary>
+        /// <see langword="true"/> if the slider should be hidden in the editor.
+        /// </summary>
+        public bool HideSlider;
+        /// <summary>
+        /// <see langword="true"/> if the editor should display a degree suffix.
+        /// </summary>
+        public bool Degrees;
+        /// <summary>
+        /// <see langword="true"/> if the editor should display the value as degrees, even though the actual value is in radians.
+        /// </summary>
+        public bool RadiansAsDegrees;
+        /// <summary>
+        /// The suffix to display in the editor. Usually used for displaying units (e.g. cm, ft, dB, etc.)
+        /// </summary>
+        public string Suffix;
     }
 }
