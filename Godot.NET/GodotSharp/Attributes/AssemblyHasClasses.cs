@@ -9,8 +9,6 @@ namespace Godot
     public class AssemblyHasClassesAttribute : Attribute
     {
         public Type[] Types;
-
-        public AssemblyHasClassesAttribute(params Type[] types)
-            => Types = types;
+        public string[] Paths;
     }
 }

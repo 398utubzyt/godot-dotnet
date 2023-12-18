@@ -1,41 +1,56 @@
 ﻿using System;
-using System.Diagnostics.CodeAnalysis;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
+using System.Reflection;
 
 namespace Godot
 {
     internal static class ScriptDB
     {
-        private static readonly BiHashMap<CSharpScript, Type> _map = new BiHashMap<CSharpScript, Type>();
+        private static readonly BiHashMap<Type, string> _map = new BiHashMap<Type, string>();
 
-        [RequiresUnreferencedCode("Calls System.Reflection.Assembly.GetType(String)")]
-        public static Type SearchOrCreate(CSharpScript scr)
+        public static bool Search(Type type, out string path)
+            => _map.TryGet(type.TypeHandle.GetHashCode(), out path);
+        public static bool Search(string path, out Type type)
+            => _map.FindLeft(path, (a, b) => a == b, out type);
+
+        public static void Register(Type type, string path)
         {
-            if (scr?.IsNull ?? true)
-                throw new ArgumentNullException(nameof(scr));
+            if (_map.FindLeft(path, (a, b) => a == b, out Type result))
+                _map.Remove(type.TypeHandle.GetHashCode());
 
-            if (!_map.TryGet(scr.Handle, out Type type))
-            {
-                type = typeof(ScriptDB).Assembly.GetType(scr.GetMeta("__dotnet.type", string.Empty).String);
-                _map[scr.Handle, scr] = type ?? throw new InvalidOperationException($"Cannot register bridge for script '{scr.GetPath()}'");
-            }
-            
-            return type;
+            _map[type.TypeHandle.GetHashCode(), type] = path;
         }
 
-        public static Script Register(Type type)
+        public static void Register(Assembly assembly)
         {
-            if (_map.FindLeft(type, (a, b) => a == b, out CSharpScript scr))
-                return scr;
+            AssemblyHasClassesAttribute attr = assembly.GetCustomAttribute<AssemblyHasClassesAttribute>();
+            if (attr == null)
+                return;
+            if (attr.Types.Length != attr.Paths.Length)
+                return;
 
-            return scr;
+            for (int i = 0; i < attr.Types.Length; ++i)
+                Register(attr.Types[i], attr.Paths[i]);
         }
 
-        public static void Unregister(Type scr)
+        public static void Unregister(Type type)
         {
-            if (_map.FindLeft(scr, (a, b) => a == b, out CSharpScript script))
-                _map.Remove(script.Handle);
+            if (_map.Contains(type.TypeHandle.GetHashCode()))
+                _map.Remove(type.TypeHandle.GetHashCode());
+        }
+
+        public static void Unregister(Assembly assembly)
+        {
+            AssemblyHasClassesAttribute attr = assembly.GetCustomAttribute<AssemblyHasClassesAttribute>();
+            if (attr == null)
+                return;
+
+            for (int i = 0; i < attr.Types.Length; ++i)
+                Unregister(attr.Types[i]);
+        }
+
+        public static void Clear()
+        {
+            _map.Clear();
         }
     }
 }

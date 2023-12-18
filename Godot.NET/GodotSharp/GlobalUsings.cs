@@ -53,6 +53,7 @@ global using Deprecated = System.ObsoleteAttribute;
 global using VariantType = Godot.Variant.Type;
 global using VariantOp = Godot.Variant.Operator;
 
+global using Godot.Collections;
 global using Godot.GdExtension;
 global using Godot.Interop;
 

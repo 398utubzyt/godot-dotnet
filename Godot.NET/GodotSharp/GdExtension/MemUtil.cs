@@ -59,16 +59,16 @@ namespace Godot.GdExtension
             => NativeMemory.Free((void*)block);
 
         [MImpl(MImplOpts.AggressiveInlining)]
-        public static void Copy(void* from, void* to, nuint size)
+        public static void Move(void* from, void* to, nuint size)
             => NativeMemory.Copy(from, to, size);
         [MImpl(MImplOpts.AggressiveInlining)]
-        public static void Copy<T>(T* from, T* to, nuint count) where T : unmanaged
+        public static void Move<T>(T* from, T* to, nuint count) where T : unmanaged
             => NativeMemory.Copy(from, to, count * (nuint)sizeof(T));
         [MImpl(MImplOpts.AggressiveInlining)]
-        public static void Copy<T>(ref T from, ref T to, nuint count)
+        public static void Move<T>(ref T from, ref T to, nuint count)
             => NativeMemory.Copy(Unsafe.AsPointer(ref from), Unsafe.AsPointer(ref to), count);
         [MImpl(MImplOpts.AggressiveInlining)]
-        public static void Copy(nint from, nint to, nuint size)
+        public static void Move(nint from, nint to, nuint size)
             => NativeMemory.Copy((void*)from, (void*)to, size);
 
         [MImpl(MImplOpts.AggressiveInlining)]
@@ -143,6 +143,12 @@ namespace Godot.GdExtension
         [MImpl(MImplOpts.AggressiveInlining)]
         public static ref T SubtractRef<T>(ref T value, nuint offset) where T : unmanaged
             => ref Unsafe.Subtract(ref value, offset);
+        [MImpl(MImplOpts.AggressiveInlining)]
+        public static ref T IncrementRef<T, TSize>(ref T value) where T : unmanaged where TSize : unmanaged
+            => ref Unsafe.Add(ref value, sizeof(TSize));
+        [MImpl(MImplOpts.AggressiveInlining)]
+        public static ref T SubtractRef<T, TSize>(ref T value) where T : unmanaged where TSize : unmanaged
+            => ref Unsafe.Subtract(ref value, sizeof(TSize));
 
         [MImpl(MImplOpts.AggressiveInlining)]
         public static ref T ByteOffsetRef<T>(ref T value, nint offset) where T : unmanaged
@@ -157,6 +163,10 @@ namespace Godot.GdExtension
         [MImpl(MImplOpts.AggressiveInlining)]
         public static T ManagedDelegate<T>(nint pointer) where T : Delegate
             => Marshal.GetDelegateForFunctionPointer<T>(pointer);
+
+        [MImpl(MImplOpts.AggressiveInlining)]
+        public static ref TTo As<TFrom, TTo>(ref TFrom from)
+            => ref Unsafe.As<TFrom, TTo>(ref from);
 
         [MImpl(MImplOpts.AggressiveInlining)]
         public static nuint SizeOf<T>()

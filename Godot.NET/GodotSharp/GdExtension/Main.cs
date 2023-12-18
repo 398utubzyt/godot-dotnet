@@ -6,12 +6,15 @@ namespace Godot.GdExtension
     {
         internal static Interface i;
         internal static GDExtensionClassLibraryPtr lib;
+        internal static GodotAssemblyLoadContext asmCtx; // TODO: Use this when Godot runs a new build cycle
 
         private static unsafe delegate* unmanaged[Cdecl] <byte*, nint> _getProcAddr;
         private static bool _warned;
 
         private unsafe delegate GDExtensionBool GodotEntryPoint(IntPtr p_get_proc_address,
             GDExtensionClassLibraryPtr p_library, Initialization* r_initialization);
+
+        #region Unmanaged
 
         [System.Runtime.InteropServices.UnmanagedCallersOnly(EntryPoint = "godot_dotnet_initialize")]
         private static unsafe GDExtensionBool Load(IntPtr p_get_proc_address, 
@@ -30,7 +33,8 @@ namespace Godot.GdExtension
             r_initialization->Deinitialize = &Deinitialize;
             if (!_warned)
             {
-                GD.PrintWarning(".NET: This API is still experimental! Please make backups of your projects before using.", "godot_dotnet_initialize", "GodotSharp/GdExtension/Main.cs", 27, true);
+                GD.PrintWarning(".NET: This API is still experimental! Please make backups of your projects before using.",
+                    "godot_dotnet_initialize", "GodotSharp/GdExtension/Main.cs", 27, true);
                 _warned = true;
             }
 
@@ -51,21 +55,19 @@ namespace Godot.GdExtension
                 switch (level)
                 {
                     case InitializationLevel.Core:
+                        Core.Initialize();
                         break;
 
                     case InitializationLevel.Servers:
-                        //ClassDB.PluginRegisterClass<CSharpLanguage>(true);
-                        //ClassDB.PluginRegisterClass<CSharpScript>(true);
-                        //ClassDB.PluginRegisterClass<CSharpScriptLoader>(true);
+                        Servers.Initialize();
                         break;
 
                     case InitializationLevel.Scene:
-                        ClassDB.PluginRegisterClass<TestNode>(true);
-                        ClassDB.PluginRegisterClass<TestResource>(true);
-                        //Engine.RegisterScriptLanguage(CSharpLanguage.Singleton);
+                        Scene.Initialize();
                         break;
 #if TOOLS
                     case InitializationLevel.Editor:
+                        Editor.Initialize();
                         break;
 #endif
                 }
@@ -90,19 +92,17 @@ namespace Godot.GdExtension
                 switch (level)
                 {
                     case InitializationLevel.Core:
+                        Core.Deinitialize();
                         break;
                     case InitializationLevel.Servers:
-                        //ClassDB.UnregisterClass<CSharpLanguage>();
-                        //ClassDB.UnregisterClass<CSharpScript>();
-                        //ClassDB.UnregisterClass<CSharpScriptLoader>();
+                        Servers.Deinitialize();
                         break;
                     case InitializationLevel.Scene:
-                        ClassDB.UnregisterClass<TestNode>();
-                        ClassDB.UnregisterClass<TestResource>();
-                        //Engine.UnregisterScriptLanguage(CSharpLanguage.Singleton);
+                        Scene.Deinitialize();
                         break;
 #if TOOLS
                     case InitializationLevel.Editor:
+                        Editor.Deinitialize();
                         break;
 #endif
                 }
@@ -112,5 +112,75 @@ namespace Godot.GdExtension
                 Console.WriteLine(e);
             }
         }
+
+        #endregion
+
+        private static class Core
+        {
+            public static unsafe void Initialize()
+            {
+                string baseDir =
+#if TOOLS
+                            System.IO.Path.Join(ProjectSettings.GlobalizePath("res://"), "../.godot/dotnet/")
+#else
+                            System.IO.Path.GetDirectoryName(OS.GetExecutablePath())
+#endif
+                            ;
+                asmCtx = new GodotAssemblyLoadContext(baseDir, Engine.IsEditorHint());
+            }
+
+            public static unsafe void Deinitialize()
+            {
+                if (asmCtx.IsCollectible)
+                    asmCtx.Unload();
+            }
+        }
+
+        private static class Servers
+        {
+            public static unsafe void Initialize()
+            {
+                //ClassDB.PluginRegisterClass<CSharpLanguage>(true);
+                //ClassDB.PluginRegisterClass<CSharpScript>(true);
+                //ClassDB.PluginRegisterClass<CSharpScriptLoader>(true);
+            }
+
+            public static unsafe void Deinitialize()
+            {
+                //ClassDB.UnregisterClass<CSharpLanguage>();
+                //ClassDB.UnregisterClass<CSharpScript>();
+                //ClassDB.UnregisterClass<CSharpScriptLoader>();
+            }
+        }
+
+        private static class Scene
+        {
+            public static unsafe void Initialize()
+            {
+                ClassDB.PluginRegisterClass<TestNode>(true);
+                ClassDB.PluginRegisterClass<TestResource>(true);
+                //Engine.RegisterScriptLanguage(CSharpLanguage.Singleton);
+            }
+
+            public static unsafe void Deinitialize()
+            {
+                ClassDB.UnregisterClass<TestNode>();
+                ClassDB.UnregisterClass<TestResource>();
+                //Engine.UnregisterScriptLanguage(CSharpLanguage.Singleton);
+            }
+        }
+
+#if TOOLS
+        private static class Editor
+        {
+            public static unsafe void Initialize()
+            {
+            }
+
+            public static unsafe void Deinitialize()
+            {
+            }
+        }
+#endif
     }
 }

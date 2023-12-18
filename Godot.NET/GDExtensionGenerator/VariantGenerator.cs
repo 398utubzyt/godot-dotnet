@@ -16,7 +16,7 @@ namespace GDExtensionGenerator
             w.Write("        /// <summary> Tries to get the <see cref=\"");
             w.Write(type);
             w.Write("\"/> value from this <see cref=\"Variant\"/>.</summary>\n");
-            w.Write("        /// <returns><see langword=\"true\"/> if successful, otherwise <see langword=\"false\"/>.</returns>\n        public bool TryAs");
+            w.Write("        /// <returns><see langword=\"true\"/> if successful, otherwise <see langword=\"false\"/>.</returns>\n        public readonly bool TryAs");
             w.Write(name);
             w.Write("(out ");
             w.Write(fulltype);

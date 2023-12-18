@@ -168,6 +168,8 @@ namespace Godot
                    _Mem._mem3 == other._Mem._mem3;
         }
 
+        public static readonly Variant Null = new Variant();
+
         /// <summary>The type of this <see cref="Variant"/>.</summary>
         public readonly VariantType VariantType => _type;
         /// <summary>The type of this <see cref="Variant"/>.</summary>
@@ -258,9 +260,100 @@ namespace Godot
         public readonly unsafe Transform3D Transform3D { [MImpl(MImplOpts.AggressiveInlining)] get => (Transform3D)(*_data._Transform3D); }
         /// <summary>Gets the <see cref="Godot.GodotObject"/> value of this <see cref="Variant"/>.</summary>
         public readonly unsafe GodotObject Object { [MImpl(MImplOpts.AggressiveInlining)] 
-            get => ClassDB.GetManagedForHandle(_data._Object.obj).Target as GodotObject; }
+            get => ClassDB.GetOrMakeHandleFromNative(_data._Object.obj).Target as GodotObject; }
 
+        public readonly bool TryAsObject(out GodotObject value)
+        {
+            if (_type != VariantType.Object)
+            {
+                value = null;
+                return false;
+            }
+            value = Object;
+            return true;
+        }
+        public readonly bool TryAsObject<T>(out T value) where T : GodotObject
+        {
+            if (_type != VariantType.Object || Object is not T tObj)
+            {
+                value = null;
+                return false;
+            }
 
+            value = tObj;
+            return true;
+        }
+
+        public readonly unsafe bool TryAs<[MustBeVariant] T>(out T value)
+        {
+            static bool SafeTryAsObject(ref readonly Variant self, ref T value)
+            {
+                if (!self.TryAsObject(out GodotObject obj) || obj is not T tObj)
+                {
+                    value = default;
+                    return false;
+                }
+
+                value = tObj;
+                return true;
+            }
+
+            value = default;
+            return typeof(T).FullName switch
+            {
+                "System.Boolean" => TryAsBool(out MemUtil.As<T, bool>(ref value)),
+                "System.SByte" => TryAsInt8(out MemUtil.As<T, sbyte>(ref value)),
+                "System.Byte" => TryAsUInt8(out MemUtil.As<T, byte>(ref value)),
+                "System.Int16" => TryAsInt16(out MemUtil.As<T, short>(ref value)),
+                "System.UInt16" => TryAsUInt16(out MemUtil.As<T, ushort>(ref value)),
+                "System.Int32" => TryAsInt32(out MemUtil.As<T, int>(ref value)),
+                "System.UInt32" => TryAsUInt32(out MemUtil.As<T, uint>(ref value)),
+                "System.Int64" => TryAsInt64(out MemUtil.As<T, long>(ref value)),
+                "System.UInt64" => TryAsUInt64(out MemUtil.As<T, ulong>(ref value)),
+                "System.Single" => TryAsFloat32(out MemUtil.As<T, float>(ref value)),
+                "System.Double" => TryAsFloat64(out MemUtil.As<T, double>(ref value)),
+                "System.String" => TryAsString(out MemUtil.As<T, string>(ref value)),
+                "Godot.StringName" => TryAsStringName(out MemUtil.As<T, StringName>(ref value)),
+                "Godot.NodePath" => TryAsNodePath(out MemUtil.As<T, NodePath>(ref value)),
+                "Godot.Vector2" => TryAsVector2(out MemUtil.As<T, Vector2>(ref value)),
+                "Godot.Vector3" => TryAsVector3(out MemUtil.As<T, Vector3>(ref value)),
+                "Godot.Vector4" => TryAsVector4(out MemUtil.As<T, Vector4>(ref value)),
+                "Godot.Vector2I" => TryAsVector2I(out MemUtil.As<T, Vector2I>(ref value)),
+                "Godot.Vector3I" => TryAsVector3I(out MemUtil.As<T, Vector3I>(ref value)),
+                "Godot.Vector4I" => TryAsVector4I(out MemUtil.As<T, Vector4I>(ref value)),
+                "Godot.Color" => TryAsColor(out MemUtil.As<T, Color>(ref value)),
+                _ => typeof(T).IsAssignableTo(typeof(GodotObject)) && SafeTryAsObject(in this, ref value)
+            };
+        }
+
+        public static unsafe Variant From<[MustBeVariant] T>(T value)
+        {
+            return typeof(T).FullName switch
+            {
+                "System.Boolean" => value is bool t ? t : false,
+                "System.SByte" => value is sbyte t ? t : (sbyte)0,
+                "System.Byte" => value is byte t ? t : (byte)0,
+                "System.Int16" => value is short t ? t : (short)0,
+                "System.UInt16" => value is ushort t ? t : (ushort)0,
+                "System.Int32" => value is int t ? t : 0,
+                "System.UInt32" => value is uint t ? t : 0u,
+                "System.Int64" => value is long t ? t : 0L,
+                "System.UInt64" => value is ulong t ? t : 0ul,
+                "System.Single" => value is float t ? t : 0.0f,
+                "System.Double" => value is double t ? t : 0.0d,
+                "System.String" => value is string t ? t : string.Empty,
+                "Godot.StringName" => value is StringName t ? t : new(),
+                "Godot.NodePath" => value is NodePath t ? t : new(),
+                "Godot.Vector2" => value is Vector2 t ? t : Vector2.Zero,
+                "Godot.Vector3" => value is Vector3 t ? t : Vector3.Zero,
+                "Godot.Vector4" => value is Vector4 t ? t : Vector4.Zero,
+                "Godot.Vector2I" => value is Vector2I t ? t : Vector2I.Zero,
+                "Godot.Vector3I" => value is Vector3I t ? t : Vector3I.Zero,
+                "Godot.Vector4I" => value is Vector4I t ? t : Vector4I.Zero,
+                "Godot.Color" => value is Color t ? t : new(),
+                _ => typeof(T).IsAssignableTo(typeof(GodotObject)) ? (value is GodotObject obj ? obj : null) : new Variant(),
+            };
+        }
 
         /// <inheritdoc/>
         public static explicit operator GodotObject(Variant v)

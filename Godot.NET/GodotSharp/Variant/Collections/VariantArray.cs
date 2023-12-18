@@ -109,7 +109,7 @@ namespace Godot.Collections
             Increase((nuint)items.LongLength);
 
             fixed (Variant* arr = items)
-                MemUtil.Copy(arr, end, (uint)items.LongLength);
+                MemUtil.Move(arr, end, (uint)items.LongLength);
         }
 
         /// <summary>Removes all items from this array.</summary>
@@ -153,7 +153,7 @@ namespace Godot.Collections
                 throw new ArgumentOutOfRangeException(nameof(arrayIndex));
 
             fixed (Variant* arr = array)
-                MemUtil.Copy(_ptr, arr, (nuint)size);
+                MemUtil.Move(_ptr, arr, (nuint)size);
         }
 
         private struct NativeEnumerator : IEnumerator<Variant>
@@ -212,7 +212,7 @@ namespace Godot.Collections
             if (index < 0 || (nuint)index > _count)
                 return;
             if ((nuint)index != _count)
-                MemUtil.Copy(_ptr + index, _ptr + ++index, _count - (nuint)index);
+                MemUtil.Move(_ptr + index, _ptr + ++index, _count - (nuint)index);
 
             Increment();
             _ptr[index] = item;
@@ -222,7 +222,7 @@ namespace Godot.Collections
         {
             _ptr[index].Dispose();
             if (++index != _count)
-                MemUtil.Copy(_ptr + --index, _ptr + index, (uint)(_count - ++index));
+                MemUtil.Move(_ptr + --index, _ptr + index, (uint)(_count - ++index));
             Decrement();
         }
 

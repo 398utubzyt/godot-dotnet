@@ -12,32 +12,6 @@ namespace Godot.Roslyn
 {
     public static class ExportAttributeHandler
     {
-        private static TValue Get<TKey, TValue>(this ImmutableArray<KeyValuePair<TKey, TValue>> arr, TKey key) where TKey : IEquatable<TKey>
-        {
-            for (int i = 0; i < arr.Length; ++i)
-                if (key.Equals(arr[i].Key))
-                    return arr[i].Value;
-            return default!;
-        }
-
-        private static bool As<T>(this TypedConstant constant, out T value)
-        {
-            if (constant.Value is T t)
-            {
-                value = t;
-                return true;
-            }
-
-            value = default!;
-            return false;
-        }
-
-        private static bool As<T>(this TypedConstant constant, out ImmutableArray<T> value)
-        {
-            value = constant.Values.Select(tc => { tc.As(out T value); return value; }).ToImmutableArray();
-            return !value.IsDefaultOrEmpty;
-        }
-
         private static void HandleEnum(AttributeData data, INamedTypeSymbol type, StringBuilder sb, ref PropertyHint hint)
         {
             TypedConstant nconst = data.NamedArguments.Get("Names");

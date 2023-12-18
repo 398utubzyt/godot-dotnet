@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Linq;
+using Microsoft.CodeAnalysis.Diagnostics;
 
 namespace Godot.Roslyn
 {
@@ -64,6 +65,58 @@ namespace Godot.Roslyn
                     description),
                 outerTypeDeclSyntax.GetLocation(),
                 outerTypeDeclSyntax.SyntaxTree.FilePath));
+        }
+
+        public static void ReportMultipleScriptClassesInFile(
+            GeneratorExecutionContext context,
+            string sourceFile
+        )
+        {
+            string message =
+                "Multiple script classes were found in  '" +
+                $"{sourceFile}'";
+
+            string description = $"{message}. A script must contain only one" +
+                                 "valid script class. Move the other script classes" +
+                                 "to separate files.";
+
+            context.ReportDiagnostic(Diagnostic.Create(
+                new DiagnosticDescriptor(id: "GD0003",
+                    title: message,
+                    messageFormat: message,
+                    category: "Usage",
+                    DiagnosticSeverity.Error,
+                    isEnabledByDefault: true,
+                    description),
+                null,
+                sourceFile));
+        }
+
+        public static void ReportMultipleScriptClassDeclarations(
+            GeneratorExecutionContext context,
+            INamedTypeSymbol symbol
+        )
+        {
+            var locations = symbol.Locations;
+            var location = locations.FirstOrDefault(l => l.SourceTree != null) ?? locations.FirstOrDefault();
+
+            string message =
+                "Multiple declarations of the same script class '" +
+                $"{symbol.ToDisplayString()}'";
+
+            string description = $"{message}. A script class must only be declared once" +
+                                 " throughout the project. Remove the other declarations.";
+
+            context.ReportDiagnostic(Diagnostic.Create(
+                new DiagnosticDescriptor(id: "GD0004",
+                    title: message,
+                    messageFormat: message,
+                    category: "Usage",
+                    DiagnosticSeverity.Error,
+                    isEnabledByDefault: true,
+                    description),
+                location,
+                location?.SourceTree?.FilePath));
         }
 
         public static void ReportExportedMemberIsStatic(
@@ -274,6 +327,155 @@ namespace Godot.Roslyn
                     description),
                 location,
                 location?.SourceTree?.FilePath));
+        }
+
+        public static readonly DiagnosticDescriptor GenericTypeArgumentMustBeVariantRule =
+            new DiagnosticDescriptor(id: "GD0301",
+                title: "The generic type argument must be a Variant compatible type",
+                messageFormat: "The generic type argument must be a Variant compatible type: {0}",
+                category: "Usage",
+                DiagnosticSeverity.Error,
+                isEnabledByDefault: true,
+                "The generic type argument must be a Variant compatible type. Use a Variant compatible type as the generic type argument.");
+
+        public static void ReportGenericTypeArgumentMustBeVariant(
+            SyntaxNodeAnalysisContext context,
+            SyntaxNode typeArgumentSyntax,
+            ISymbol typeArgumentSymbol)
+        {
+            string message = "The generic type argument " +
+                            $"must be a Variant compatible type: '{typeArgumentSymbol.ToDisplayString()}'";
+
+            string description = $"{message}. Use a Variant compatible type as the generic type argument.";
+
+            context.ReportDiagnostic(Diagnostic.Create(
+                new DiagnosticDescriptor(id: "GD0301",
+                    title: message,
+                    messageFormat: message,
+                    category: "Usage",
+                    DiagnosticSeverity.Error,
+                    isEnabledByDefault: true,
+                    description),
+                typeArgumentSyntax.GetLocation(),
+                typeArgumentSyntax.SyntaxTree.FilePath));
+        }
+
+        public static readonly DiagnosticDescriptor GenericTypeParameterMustBeVariantAnnotatedRule =
+            new DiagnosticDescriptor(id: "GD0302",
+                title: "The generic type parameter must be annotated with the MustBeVariant attribute",
+                messageFormat: "The generic type argument must be a Variant type: {0}",
+                category: "Usage",
+                DiagnosticSeverity.Error,
+                isEnabledByDefault: true,
+                "The generic type argument must be a Variant type. Use a Variant type as the generic type argument.");
+
+        public static void ReportGenericTypeParameterMustBeVariantAnnotated(
+            SyntaxNodeAnalysisContext context,
+            SyntaxNode typeArgumentSyntax,
+            ISymbol typeArgumentSymbol)
+        {
+            string message = "The generic type parameter must be annotated with the MustBeVariant attribute";
+            string description = $"{message}. Add the MustBeVariant attribute to the generic type parameter.";
+
+            context.ReportDiagnostic(Diagnostic.Create(
+                new DiagnosticDescriptor(id: "GD0302",
+                    title: message,
+                    messageFormat: message,
+                    category: "Usage",
+                    DiagnosticSeverity.Error,
+                    isEnabledByDefault: true,
+                    description),
+                typeArgumentSyntax.GetLocation(),
+                typeArgumentSyntax.SyntaxTree.FilePath));
+        }
+
+        public static readonly DiagnosticDescriptor TypeArgumentParentSymbolUnhandledRule =
+            new DiagnosticDescriptor(id: "GD0303",
+                title: "The generic type parameter must be annotated with the MustBeVariant attribute",
+                messageFormat: "The generic type argument must be a Variant type: {0}",
+                category: "Usage",
+                DiagnosticSeverity.Error,
+                isEnabledByDefault: true,
+                "The generic type argument must be a Variant type. Use a Variant type as the generic type argument.");
+
+        public static void ReportTypeArgumentParentSymbolUnhandled(
+            SyntaxNodeAnalysisContext context,
+            SyntaxNode typeArgumentSyntax,
+            ISymbol parentSymbol)
+        {
+            string message = $"Symbol '{parentSymbol.ToDisplayString()}' parent of a type argument " +
+                             "that must be Variant compatible was not handled.";
+
+            string description = $"{message}. Handle type arguments that are children of the unhandled symbol type.";
+
+            context.ReportDiagnostic(Diagnostic.Create(
+                new DiagnosticDescriptor(id: "GD0303",
+                    title: message,
+                    messageFormat: message,
+                    category: "Usage",
+                    DiagnosticSeverity.Error,
+                    isEnabledByDefault: true,
+                    description),
+                typeArgumentSyntax.GetLocation(),
+                typeArgumentSyntax.SyntaxTree.FilePath));
+        }
+
+        public static readonly DiagnosticDescriptor GlobalClassMustDeriveFromGodotObjectRule =
+            new DiagnosticDescriptor(id: "GD0401",
+                title: "The class must derive from GodotObject or a derived class",
+                messageFormat: "The class '{0}' must derive from GodotObject or a derived class",
+                category: "Usage",
+                DiagnosticSeverity.Error,
+                isEnabledByDefault: true,
+                "The class must derive from GodotObject or a derived class. Change the base class or remove the '[GlobalClass]' attribute.");
+
+        public static void ReportGlobalClassMustDeriveFromGodotObject(
+            SyntaxNodeAnalysisContext context,
+            SyntaxNode classSyntax,
+            ISymbol typeSymbol)
+        {
+            string message = $"The class '{typeSymbol.ToDisplayString()}' must derive from GodotObject or a derived class";
+            string description = $"{message}. Change the base class or remove the '[GlobalClass]' attribute.";
+
+            context.ReportDiagnostic(Diagnostic.Create(
+                new DiagnosticDescriptor(id: "GD0401",
+                    title: message,
+                    messageFormat: message,
+                    category: "Usage",
+                    DiagnosticSeverity.Error,
+                    isEnabledByDefault: true,
+                    description),
+                classSyntax.GetLocation(),
+                classSyntax.SyntaxTree.FilePath));
+        }
+
+        public static readonly DiagnosticDescriptor GlobalClassMustNotBeGenericRule =
+            new DiagnosticDescriptor(id: "GD0402",
+                title: "The class must not contain generic arguments",
+                messageFormat: "The class '{0}' must not contain generic arguments",
+                category: "Usage",
+                DiagnosticSeverity.Error,
+                isEnabledByDefault: true,
+                "The class must be a non-generic type. Remove the generic arguments or the '[GlobalClass]' attribute.");
+
+        public static void ReportGlobalClassMustNotBeGeneric(
+            SyntaxNodeAnalysisContext context,
+            SyntaxNode classSyntax,
+            ISymbol typeSymbol)
+        {
+            string message = $"The class '{typeSymbol.ToDisplayString()}' must not contain generic arguments";
+            string description = $"{message}. Remove the generic arguments or the '[GlobalClass]' attribute.";
+
+            context.ReportDiagnostic(Diagnostic.Create(
+                new DiagnosticDescriptor(id: "GD0402",
+                    title: message,
+                    messageFormat: message,
+                    category: "Usage",
+                    DiagnosticSeverity.Error,
+                    isEnabledByDefault: true,
+                    description),
+                classSyntax.GetLocation(),
+                classSyntax.SyntaxTree.FilePath));
         }
     }
 }

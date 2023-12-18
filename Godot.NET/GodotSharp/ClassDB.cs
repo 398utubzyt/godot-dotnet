@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using System.Reflection.Metadata;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
@@ -358,21 +359,25 @@ namespace Godot
                 MemUtil.Free(info);
             }
 
-            [UnmanagedCallersOnly]
-            public unsafe static void* BindCreate(void* lib, void* handle)
+            public unsafe static GCHandle CreateBindForNative(nint handle)
             {
                 StringName sn;
-                if (!Main.i.ObjectGetClassName((nint)handle, Main.lib, (nint)(&sn)).ToBool() || !TypeDB.Search(sn, out Type type))
-                    return null;
+                if (!Main.i.ObjectGetClassName(handle, Main.lib, (nint)(&sn)).ToBool() || !TypeDB.Search(sn, out Type type))
+                    return default;
 
                 GodotObject obj = CreateUninitializedType(type);
                 if (obj == null)
-                    return null;
+                    return default;
 
                 bool refcounted = obj is RefCounted;
                 GCHandle bind = GCHandle.Alloc(obj, refcounted ? GCHandleType.Weak : GCHandleType.Normal);
-                obj.Initialize(bind, (nint)handle, refcounted);
-                return (void*)(nint)bind;
+                obj.Initialize(bind, handle, refcounted);
+                return bind;
+            }
+            [UnmanagedCallersOnly]
+            public unsafe static void* BindCreate(void* lib, void* handle)
+            {
+                return (void*)(nint)CreateBindForNative((nint)handle);
             }
             [UnmanagedCallersOnly]
             public unsafe static void BindFree(void* lib, void* native, void* bind)
@@ -388,15 +393,24 @@ namespace Godot
 
         internal static unsafe T GetSingletonInstance<T>(StringName name) where T : GodotObject
         {
-            return GetManagedForHandle(Main.i.GlobalGetSingleton((nint)(&name))).Target as T;
+            return GetOrMakeHandleFromNative(Main.i.GlobalGetSingleton((nint)(&name))).Target as T;
         }
-        internal static nint MakeHandleForManaged(Type type, GCHandle bind)
+        internal static nint MakeHandleFromManaged(Type type, GCHandle bind)
         {
             nint handle = ManagedHelper.CreateNative(type);
             ManagedHelper.TieNative(type, bind, handle);
             return handle;
         }
-        internal static unsafe GCHandle GetManagedForHandle(nint native)
+        internal static GCHandle GetOrMakeHandleFromNative(nint native)
+        {
+            GCHandle handle = GetHandleFromNative(native);
+            if (!handle.IsAllocated)
+                handle = MakeHandleFromNative(native);
+            return handle;
+        }
+        internal static GCHandle MakeHandleFromNative(nint native)
+            => ManagedHelper.CreateBindForNative(native);
+        internal static unsafe GCHandle GetHandleFromNative(nint native)
         {
             InstanceBindingCallbacks ibc = ManagedHelper.MakeBindingCallbacks();
             return GCHandle.FromIntPtr((nint)Main.i.ObjectGetInstanceBinding(native, (void*)Main.lib, &ibc));
@@ -436,7 +450,7 @@ namespace Godot
             TypeDB.Register(type, cn);
         }
 
-        public static unsafe void UnregisterClass<T>() where T : GodotObject
+        internal static unsafe void UnregisterClass<T>() where T : GodotObject
         {
             TypeDB.Unregister(typeof(T));
 

@@ -91,7 +91,7 @@ namespace Godot
         {
             Type type = GetType();
             GCHandle bind = GCHandle.Alloc(this, refcounted ? GCHandleType.Weak : GCHandleType.Normal);
-            Initialize(bind, ClassDB.MakeHandleForManaged(type, bind), refcounted);
+            Initialize(bind, ClassDB.MakeHandleFromManaged(type, bind), refcounted);
         }
 
         public GodotObject() : this(false)

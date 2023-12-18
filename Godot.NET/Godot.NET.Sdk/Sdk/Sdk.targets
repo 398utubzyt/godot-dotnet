@@ -17,6 +17,7 @@
 
   <!-- C# source generators -->
   <ItemGroup Condition=" '$(DisableImplicitGodotGeneratorReferences)' != 'true' ">
+    <CompilerVisibleProperty Include="GodotProjectDir" />
     <PackageReference Include="Godot.Roslyn" Version="$(PackageVersion_Godot_Roslyn)" />
   </ItemGroup>
 

@@ -27,20 +27,6 @@ namespace Godot.Roslyn
             }
         }
 
-        private class MethodOverloadEqualityComparer : IEqualityComparer<GodotMethodInfo>
-        {
-            public bool Equals(GodotMethodInfo x, GodotMethodInfo y)
-                => x.Params.Length == y.Params.Length && x.Method.Name == y.Method.Name;
-
-            public int GetHashCode(GodotMethodInfo obj)
-            {
-                unchecked
-                {
-                    return (obj.Params.Length.GetHashCode() * 397) ^ obj.Method.Name.GetHashCode();
-                }
-            }
-        }
-
         private static void VisitGodotScriptClass(GeneratorExecutionContext context, INamedTypeSymbol symbol)
         {
             INamespaceSymbol namespaceSymbol = symbol.ContainingNamespace;
@@ -195,9 +181,7 @@ namespace Godot.Roslyn
             foreach (IMethodSymbol msym in callSymbols)
             {
                 source.Append("if (method == \"");
-                source.Append(msym.GetAttributes()
-                    .FirstOrDefault(attr => attr.AttributeClass?.IsGodotInternalNameAttribute() ?? false)?
-                    .NamedArguments[0].Value.Value?.ToString() ?? msym.Name);
+                source.Append(msym.InternalMethodName());
                 source.Append("\")\n{\n");
                 bool modify = false;
                 if (!msym.ReturnsVoid)

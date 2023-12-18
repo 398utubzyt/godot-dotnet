@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Runtime.CompilerServices;
 
-namespace Godot
+namespace Godot.Collections
 {
     internal class BiHashMap<LeftT, RightT>
     {
@@ -63,7 +63,7 @@ namespace Godot
             {
                 if (!HasNext)
                     return false;
-                
+
                 if (Next.Hash != hash)
                     return Next.Remove(hash);
 
@@ -235,12 +235,12 @@ namespace Godot
             [MImpl(MImplOpts.AggressiveInlining)]
             set => Set(hash, left, value);
         }
-        public RightT this[IntPtr hash]
+        public RightT this[GDExtensionUninitializedObjectPtr hash]
         {
             [MImpl(MImplOpts.AggressiveInlining)]
             get => Get((ulong)hash);
         }
-        public RightT this[IntPtr hash, LeftT left]
+        public RightT this[GDExtensionUninitializedObjectPtr hash, LeftT left]
         {
             [MImpl(MImplOpts.AggressiveInlining)]
             set => Set((ulong)hash, left, value);

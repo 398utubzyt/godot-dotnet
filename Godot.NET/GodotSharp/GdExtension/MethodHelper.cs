@@ -50,7 +50,7 @@ namespace Godot.GdExtension
         {
             nint ptr;
             Main.i.ObjectMethodBindPtrcall(bind, self.Handle, (nint*)0, (nint)(&ptr));
-            GCHandle handle = ClassDB.GetManagedForHandle(ptr);
+            GCHandle handle = ClassDB.GetOrMakeHandleFromNative(ptr);
             return handle.Target as T;
         }
         public static T[] CallMethodBindArray<T>(GodotObject self, nint bind)
@@ -72,7 +72,7 @@ namespace Godot.GdExtension
         {
             nint ptr;
             Main.i.ObjectMethodBindPtrcall(bind, self.Handle, args, (nint)(&ptr));
-            GCHandle handle = ClassDB.GetManagedForHandle(ptr);
+            GCHandle handle = ClassDB.GetOrMakeHandleFromNative(ptr);
             return handle.Target as T;
         }
         public static T[] CallMethodBindArray<T>(GodotObject self, nint bind, nint* args)
@@ -95,7 +95,7 @@ namespace Godot.GdExtension
         {
             nint ptr;
             Main.i.ObjectMethodBindPtrcall(bind, 0, (nint*)0, (nint)(&ptr));
-            GCHandle handle = ClassDB.GetManagedForHandle(ptr);
+            GCHandle handle = ClassDB.GetOrMakeHandleFromNative(ptr);
             return handle.Target as T;
         }
         public static T[] CallMethodBindArray<T>(nint bind)
@@ -117,7 +117,7 @@ namespace Godot.GdExtension
         {
             nint ptr;
             Main.i.ObjectMethodBindPtrcall(bind, 0, args, (nint)(&ptr));
-            GCHandle handle = ClassDB.GetManagedForHandle(ptr);
+            GCHandle handle = ClassDB.GetOrMakeHandleFromNative(ptr);
             return handle.Target as T;
         }
         public static T[] CallMethodBindArray<T>(nint bind, nint* args)

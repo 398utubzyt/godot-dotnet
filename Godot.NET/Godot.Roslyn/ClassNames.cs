@@ -6,7 +6,7 @@ namespace Godot.Roslyn
 
         public const string GodotObject = "Godot.GodotObject";
         public const string AssemblyHasScriptsAttr = "Godot.AssemblyHasScriptsAttribute";
-        public const string InternalNameAttr = "Godot.InternalNameAttribute";
+        public const string ExposeAsAttr = "Godot.ExposeAsAttribute";
         public const string SignalAttr = "Godot.SignalAttribute";
         public const string ToolAttr = "Godot.ToolAttribute";
         public const string MustBeVariantAttr = "Godot.MustBeVariantAttribute";

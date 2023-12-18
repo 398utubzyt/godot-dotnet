@@ -313,6 +313,10 @@ namespace GDExtensionGenerator
             ref MethodInfo info, bool instanced, Span<char> buffer, int tab = 1)
         {
             WriteTab(w, tab);
+            w.Write("[global::Godot.ExposeAs(Name = \"");
+            w.Write(info.Name);
+            w.Write("\")]\n");
+            WriteTab(w, tab);
             if (instanced)
                 w.Write("private ");
             else

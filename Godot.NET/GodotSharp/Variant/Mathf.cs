@@ -53,6 +53,20 @@ namespace Godot
             return Math.Abs(s);
         }
 
+        /// <inheritdoc cref="Abs(int)"/>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static long Abs(long s)
+        {
+            return Math.Abs(s);
+        }
+
+        /// <inheritdoc cref="Abs(int)"/>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static nint Abs(nint s)
+        {
+            return Math.Abs(s);
+        }
+
         /// <summary>
         /// Returns the absolute value of <paramref name="s"/> (i.e. positive value).
         /// </summary>
@@ -237,6 +251,41 @@ namespace Godot
             return Math.Clamp(value, min, max);
         }
 
+        /// <inheritdoc cref="Clamp(int, int, int)"/>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static uint Clamp(uint value, uint min, uint max)
+        {
+            return Math.Clamp(value, min, max);
+        }
+
+        /// <inheritdoc cref="Clamp(int, int, int)"/>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static long Clamp(long value, long min, long max)
+        {
+            return Math.Clamp(value, min, max);
+        }
+
+        /// <inheritdoc cref="Clamp(int, int, int)"/>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static ulong Clamp(ulong value, ulong min, ulong max)
+        {
+            return Math.Clamp(value, min, max);
+        }
+
+        /// <inheritdoc cref="Clamp(int, int, int)"/>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static nint Clamp(nint value, nint min, nint max)
+        {
+            return Math.Clamp(value, min, max);
+        }
+
+        /// <inheritdoc cref="Clamp(int, int, int)"/>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static nuint Clamp(nuint value, nuint min, nuint max)
+        {
+            return Math.Clamp(value, min, max);
+        }
+
         /// <summary>
         /// Clamps a <paramref name="value"/> so that it is not less than <paramref name="min"/>
         /// and not more than <paramref name="max"/>.
@@ -251,14 +300,8 @@ namespace Godot
             return Math.Clamp(value, min, max);
         }
 
-        /// <summary>
-        /// Clamps a <paramref name="value"/> so that it is not less than <paramref name="min"/>
-        /// and not more than <paramref name="max"/>.
-        /// </summary>
-        /// <param name="value">The value to clamp.</param>
-        /// <param name="min">The minimum allowed value.</param>
-        /// <param name="max">The maximum allowed value.</param>
-        /// <returns>The clamped value.</returns>
+
+        /// <inheritdoc cref="Clamp(float, float, float)"/>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static double Clamp(double value, double min, double max)
         {
@@ -1103,6 +1146,41 @@ namespace Godot
             return Math.Max(a, b);
         }
 
+        /// <inheritdoc cref="Max(int, int)"/>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static uint Max(uint a, uint b)
+        {
+            return Math.Max(a, b);
+        }
+
+        /// <inheritdoc cref="Max(int, int)"/>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static long Max(long a, long b)
+        {
+            return Math.Max(a, b);
+        }
+
+        /// <inheritdoc cref="Max(int, int)"/>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static ulong Max(ulong a, ulong b)
+        {
+            return Math.Max(a, b);
+        }
+
+        /// <inheritdoc cref="Max(int, int)"/>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static nint Max(nint a, nint b)
+        {
+            return Math.Max(a, b);
+        }
+
+        /// <inheritdoc cref="Max(int, int)"/>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static nuint Max(nuint a, nuint b)
+        {
+            return Math.Max(a, b);
+        }
+
         /// <summary>
         /// Returns the maximum of two values.
         /// </summary>
@@ -1135,6 +1213,41 @@ namespace Godot
         /// <returns>Whichever of the two values is lower.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int Min(int a, int b)
+        {
+            return Math.Min(a, b);
+        }
+
+        /// <inheritdoc cref="Min(int, int)"/>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static uint Min(uint a, uint b)
+        {
+            return Math.Min(a, b);
+        }
+
+        /// <inheritdoc cref="Min(int, int)"/>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static long Min(long a, long b)
+        {
+            return Math.Min(a, b);
+        }
+
+        /// <inheritdoc cref="Min(int, int)"/>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static ulong Min(ulong a, ulong b)
+        {
+            return Math.Min(a, b);
+        }
+
+        /// <inheritdoc cref="Min(int, int)"/>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static nint Min(nint a, nint b)
+        {
+            return Math.Min(a, b);
+        }
+
+        /// <inheritdoc cref="Min(int, int)"/>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static nuint Min(nuint a, nuint b)
         {
             return Math.Min(a, b);
         }
@@ -1193,7 +1306,7 @@ namespace Godot
         {
             if (Math.Abs(to - from) <= delta)
                 return to;
-
+            
             return from + (Math.Sign(to - from) * delta);
         }
 
@@ -1203,16 +1316,22 @@ namespace Godot
         /// <param name="value">The input value.</param>
         /// <returns>The nearest larger power of 2.</returns>
         public static int NearestPo2(int value)
-        {
-            value--;
-            value |= value >> 1;
-            value |= value >> 2;
-            value |= value >> 4;
-            value |= value >> 8;
-            value |= value >> 16;
-            value++;
-            return value;
-        }
+            => (int)System.Numerics.BitOperations.RoundUpToPowerOf2((uint)value);
+        /// <inheritdoc cref="NearestPo2(int)"/>
+        public static uint NearestPo2(uint value)
+            => System.Numerics.BitOperations.RoundUpToPowerOf2(value);
+        /// <inheritdoc cref="NearestPo2(int)"/>
+        public static long NearestPo2(long value)
+            => (long)System.Numerics.BitOperations.RoundUpToPowerOf2((ulong)value);
+        /// <inheritdoc cref="NearestPo2(int)"/>
+        public static ulong NearestPo2(ulong value)
+            => System.Numerics.BitOperations.RoundUpToPowerOf2(value);
+        /// <inheritdoc cref="NearestPo2(int)"/>
+        public static nint NearestPo2(nint value)
+            => (nint)System.Numerics.BitOperations.RoundUpToPowerOf2((nuint)value);
+        /// <inheritdoc cref="NearestPo2(int)"/>
+        public static nuint NearestPo2(nuint value)
+            => System.Numerics.BitOperations.RoundUpToPowerOf2(value);
 
         /// <summary>
         /// Performs a canonical Modulus operation, where the output is on the range [0, <paramref name="b"/>).
@@ -1370,6 +1489,20 @@ namespace Godot
         /// <returns>One of three possible values: <c>1</c>, <c>-1</c>, or <c>0</c>.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int Sign(int s)
+        {
+            return Math.Sign(s);
+        }
+
+        /// <inheritdoc cref="Sign(int)"/>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static long Sign(long s)
+        {
+            return Math.Sign(s);
+        }
+
+        /// <inheritdoc cref="Sign(int)"/>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static nint Sign(nint s)
         {
             return Math.Sign(s);
         }
@@ -1630,10 +1763,35 @@ namespace Godot
         public static int Wrap(int value, int min, int max)
         {
             int range = max - min;
-            if (range == 0)
-                return min;
+            return range == 0 ? min : min + ((((value - min) % range) + range) % range);
+        }
 
-            return min + ((((value - min) % range) + range) % range);
+        /// <inheritdoc cref="Wrap(int, int, int)"/>
+        public static uint Wrap(uint value, uint min, uint max)
+        {
+            uint range = max - min;
+            return range == 0 ? min : min + ((((value - min) % range) + range) % range);
+        }
+
+        /// <inheritdoc cref="Wrap(int, int, int)"/>
+        public static long Wrap(long value, long min, long max)
+        {
+            long range = max - min;
+            return range == 0 ? min : min + ((((value - min) % range) + range) % range);
+        }
+
+        /// <inheritdoc cref="Wrap(int, int, int)"/>
+        public static nint Wrap(nint value, nint min, nint max)
+        {
+            nint range = max - min;
+            return range == 0 ? min : min + ((((value - min) % range) + range) % range);
+        }
+
+        /// <inheritdoc cref="Wrap(int, int, int)"/>
+        public static nuint Wrap(nuint value, nuint min, nuint max)
+        {
+            nuint range = max - min;
+            return range == 0 ? min : min + ((((value - min) % range) + range) % range);
         }
 
         /// <summary>

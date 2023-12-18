@@ -3,6 +3,7 @@ using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
+
 namespace Godot
 {
     internal static class SName
@@ -12,7 +13,7 @@ namespace Godot
         public static string SearchOrCreate(StringName name)
         {
             if (name.IsNull)
-                return "null";
+                return string.Empty;
 
             if (!_map.TryGet((nint)name, out string ret))
             {

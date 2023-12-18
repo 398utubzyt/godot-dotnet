@@ -11,12 +11,50 @@ namespace Godot.Roslyn
 {
     static class ExtensionMethods
     {
+        private class FirstScriptClassComparer : IEqualityComparer<INamedTypeSymbol>
+        {
+            private static readonly FirstScriptClassComparer Default = new();
+            public static FirstScriptClassComparer For(GeneratorExecutionContext context)
+            {
+                lock (Default)
+                    Default._ctx = context;
+
+                return Default;
+            }
+
+            private GeneratorExecutionContext _ctx;
+
+            public bool Equals(INamedTypeSymbol x, INamedTypeSymbol y)
+            {
+                if (x is null)
+                    return y is null;
+                if (x.Equals(y, SymbolEqualityComparer.Default))
+                    return true;
+
+                foreach (Location xLoc in x.Locations)
+                    if (xLoc.IsInSource)
+                        foreach (Location yLoc in y.Locations)
+                            if (yLoc.IsInSource && xLoc.SourceTree!.FilePath == yLoc.SourceTree!.FilePath)
+                            {
+                                Reporter.ReportMultipleScriptClassesInFile(_ctx, xLoc.SourceTree!.FilePath);
+                                return true;
+                            }
+                return false;
+            }
+
+            public int GetHashCode(INamedTypeSymbol obj)
+            {
+#pragma warning disable RS1024
+                return obj?.GetHashCode() ?? 0;
+#pragma warning restore RS1024
+            }
+        }
         public static INamedTypeSymbol[] GetGodotClasses(this GeneratorExecutionContext context)
             => context.Compilation.SyntaxTrees
                 .SelectMany(tree =>
                     tree.GetRoot().DescendantNodes()
                         .OfType<ClassDeclarationSyntax>()
-                        .SelectGodotScriptClasses(context.Compilation)
+                        .SelectGodotScriptClasses(context, context.Compilation)
                         // Report and skip non-partial classes
                         .Where(x =>
                         {
@@ -28,6 +66,12 @@ namespace Godot.Roslyn
                                     return false;
                                 }
 
+                                if (x.symbol.Locations.Length > 1)
+                                {
+                                    Reporter.ReportMultipleScriptClassDeclarations(context, x.symbol);
+                                    return false;
+                                }
+
                                 return true;
                             }
 
@@ -36,7 +80,7 @@ namespace Godot.Roslyn
                         })
                         .Select(x => x.symbol)
                 )
-                .Distinct<INamedTypeSymbol>(SymbolEqualityComparer.Default)
+                .Distinct(FirstScriptClassComparer.For(context))
                 .ToArray();
         public static bool TryGetGlobalAnalyzerProperty(
             this GeneratorExecutionContext context, string property, out string? value
@@ -48,18 +92,13 @@ namespace Godot.Roslyn
                toggle != null &&
                toggle.Equals("disabled", StringComparison.OrdinalIgnoreCase);
 
-        public static bool IsGodotToolsProject(this GeneratorExecutionContext context)
-            => context.TryGetGlobalAnalyzerProperty("IsGodotToolsProject", out string? toggle) &&
-               toggle != null &&
-               toggle.Equals("true", StringComparison.OrdinalIgnoreCase);
-
         public static bool IsGodotSourceGeneratorDisabled(this GeneratorExecutionContext context, string generatorName) =>
             AreGodotSourceGeneratorsDisabled(context) ||
             (context.TryGetGlobalAnalyzerProperty("GodotDisabledSourceGenerators", out string? disabledGenerators) &&
             disabledGenerators != null &&
             disabledGenerators.Split(';').Contains(generatorName));
 
-        public static bool InheritsFrom(this INamedTypeSymbol? symbol, string typeFullName)
+        public static bool InheritsFrom(this ITypeSymbol? symbol, string typeFullName)
         {
             while (symbol != null)
             {
@@ -74,7 +113,7 @@ namespace Godot.Roslyn
             return false;
         }
 
-        public static bool InheritsFrom(this INamedTypeSymbol? symbol, string assemblyName, string typeFullName)
+        public static bool InheritsFrom(this ITypeSymbol? symbol, string assemblyName, string typeFullName)
         {
             while (symbol != null)
             {
@@ -124,8 +163,8 @@ namespace Godot.Roslyn
         }
 
         private static bool TryGetGodotScriptClass(
-            this ClassDeclarationSyntax cds, Compilation compilation,
-            out INamedTypeSymbol? symbol
+            this ClassDeclarationSyntax cds, GeneratorExecutionContext context,
+            Compilation compilation, out INamedTypeSymbol? symbol
         )
         {
             var sm = compilation.GetSemanticModel(cds.SyntaxTree);
@@ -145,12 +184,13 @@ namespace Godot.Roslyn
 
         public static IEnumerable<(ClassDeclarationSyntax cds, INamedTypeSymbol symbol)> SelectGodotScriptClasses(
             this IEnumerable<ClassDeclarationSyntax> source,
+            GeneratorExecutionContext context,
             Compilation compilation
         )
         {
             foreach (var cds in source)
             {
-                if (cds.TryGetGodotScriptClass(compilation, out var symbol))
+                if (cds.TryGetGodotScriptClass(context, compilation, out var symbol))
                     yield return (cds, symbol!);
             }
         }
@@ -224,6 +264,9 @@ namespace Godot.Roslyn
         public static string FullQualifiedNameIncludeGlobal(this INamespaceSymbol namespaceSymbol)
             => namespaceSymbol.ToDisplayString(FullyQualifiedFormatIncludeGlobal);
 
+        public static string AssemblyQualifiedNameIncludeGlobal(this ITypeSymbol symbol)
+            => symbol.ContainingAssembly.Name;
+
         public static string FullQualifiedSyntax(this SyntaxNode node, SemanticModel sm)
         {
             StringBuilder sb = new();
@@ -271,7 +314,7 @@ namespace Godot.Roslyn
                 .Replace("<", "(Of ")
                 .Replace(">", ")");
 
-        public static string GodotVariantType(this INamedTypeSymbol symbol)
+        public static string GodotVariantType(this ITypeSymbol symbol)
         {
             switch (symbol.FullQualifiedNameOmitGlobal())
             {
@@ -356,7 +399,7 @@ namespace Godot.Roslyn
             return "Nil";
         }
 
-        public static string GodotNativeType(this INamedTypeSymbol symbol, out bool modify)
+        public static string GodotNativeType(this ITypeSymbol symbol, out bool modify)
         {
             switch (symbol.FullQualifiedNameOmitGlobal())
             {
@@ -389,19 +432,21 @@ namespace Godot.Roslyn
 
         public static string InternalMethodName(this IMethodSymbol method)
         {
-            return method.GetAttributes()
-                    .FirstOrDefault(attr => attr.AttributeClass?.IsGodotInternalNameAttribute() ?? false)?
-                    .NamedArguments[0].Value.Value?.ToString() ?? method.Name;
+            while (method.IsOverride && !method.HasGodotExposeAsAttribute() && method.OverriddenMethod!.ContainingAssembly.Name == ClassNames.GodotAssembly)
+                method = method.OverriddenMethod!;
+            return (method.GetGodotExposeAsAttribute(out AttributeData? exposed)
+                && exposed!.NamedArguments.Get("Name").As(out string mname)) ? mname : method.Name;
         }
 
-        public static bool IsGodotObject(this INamedTypeSymbol symbol)
+        public static bool IsGodotObject(this ITypeSymbol symbol)
             => symbol.InheritsFrom(ClassNames.GodotAssembly, ClassNames.GodotObject);
 
-        public static bool IsGodotInternalNameAttribute(this INamedTypeSymbol symbol)
-            => symbol.FullQualifiedNameOmitGlobal() == ClassNames.InternalNameAttr;
-
-        public static bool IsGodotExportAttribute(this INamedTypeSymbol symbol)
-            => symbol.FullQualifiedNameOmitGlobal() == ClassNames.ExportAttr || symbol.InheritsFrom("Godot.ExportAttribute");
+        public static bool GetGodotExposeAsAttribute(this ISymbol symbol, out AttributeData? data)
+            => (data = symbol.GetAttributes().FirstOrDefault(attr => attr.AttributeClass?.IsGodotExposeAsAttribute() ?? false)) != null;
+        public static bool HasGodotExposeAsAttribute(this ISymbol symbol)
+            => symbol.GetAttributes().Any(attr => attr.AttributeClass?.IsGodotExposeAsAttribute() ?? false);
+        public static bool IsGodotExposeAsAttribute(this INamedTypeSymbol symbol)
+            => symbol.FullQualifiedNameOmitGlobal() == ClassNames.ExposeAsAttr;
 
         public static bool IsBuiltinNumber(this ITypeSymbol symbol)
             => symbol.SpecialType switch { 
@@ -415,7 +460,6 @@ namespace Godot.Roslyn
                 SpecialType.System_UInt64 => true,
                 SpecialType.System_Single => true,
                 SpecialType.System_Double => true,
-                SpecialType.System_Decimal => true,
                 _ => false,
             };
 
@@ -540,12 +584,25 @@ namespace Godot.Roslyn
             => location.SourceTree?.GetLineSpan(location.SourceSpan).StartLinePosition.Line
                ?? location.GetLineSpan().StartLinePosition.Line;
 
+        public static bool IsInheritableAttribute(this INamedTypeSymbol attrType)
+        {
+            ImmutableArray<AttributeData> attr = attrType.GetAttributes();
+            foreach (AttributeData a in attr)
+            {
+                if (a.AttributeClass?.FullQualifiedNameOmitGlobal() == typeof(AttributeUsageAttribute).FullName)
+                    return a.NamedArguments.Get("Inherited").As(out bool isInherited) && isInherited;
+            }
+            return false;
+        }
+
         public static bool HasAttribute(this ITypeSymbol type, string attribute)
         {
             ImmutableArray<AttributeData> attr = type.GetAttributes();
             foreach (AttributeData a in attr)
+            {
                 if (a.AttributeClass?.FullQualifiedNameOmitGlobal() == attribute)
                     return true;
+            }
             return false;
         }
         public static bool IsGlobalType(this ITypeSymbol type)
@@ -586,6 +643,32 @@ namespace Godot.Roslyn
                 if (TryGetCompatibleSignature(method, out GodotMethodInfo info))
                     yield return info;
             }
+        }
+
+        public static TValue Get<TKey, TValue>(this ImmutableArray<KeyValuePair<TKey, TValue>> arr, TKey key) where TKey : IEquatable<TKey>
+        {
+            for (int i = 0; i < arr.Length; ++i)
+                if (key.Equals(arr[i].Key))
+                    return arr[i].Value;
+            return default!;
+        }
+
+        public static bool As<T>(this TypedConstant constant, out T value)
+        {
+            if (constant.Value is T t)
+            {
+                value = t;
+                return true;
+            }
+
+            value = default!;
+            return false;
+        }
+
+        public static bool As<T>(this TypedConstant constant, out ImmutableArray<T> value)
+        {
+            value = constant.Values.Select(tc => { tc.As(out T value); return value; }).ToImmutableArray();
+            return !value.IsDefaultOrEmpty;
         }
     }
 }
