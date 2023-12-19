@@ -1,113 +1,137 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
-
-using Dictionary = Godot.Collections.VariantDictionary;
 
 namespace Godot.Collections
 {
-#pragma warning disable CA1710
-    /// <inheritdoc/>
-    public unsafe class VariantDictionary : IDictionary<Variant, Variant>, IDisposable
+    public partial struct VariantDictionary : IDictionary<Variant, Variant>, IDisposable
     {
-        private class DictionaryIsReadOnlyException : Exception
+        private unsafe DictionaryPrivate* _p;
+
+        public unsafe readonly Variant this[Variant key]
         {
-            public DictionaryIsReadOnlyException() : base("Cannot modify dictionary because it is marked as readonly (see `IsReadOnly` property).") { }
+            [MImpl(MImplOpts.AggressiveInlining)]
+            get
+            {
+                VariantDictionary self = this;
+                return *(Variant*)Main.i.DictionaryOperatorIndexConst((nint)(&self), (nint)(&key));
+            }
+            [MImpl(MImplOpts.AggressiveInlining)]
+            set
+            {
+                VariantDictionary self = this;
+                *(Variant*)Main.i.DictionaryOperatorIndex((nint)(&self), (nint)(&key)) = value;
+            }
         }
 
-        private struct Entry
+        public readonly unsafe int Count { get
+            {
+                VariantDictionary self = this;
+                int ret;
+                __InternalCalls.size((nint)(&self), null, (nint)(&ret), 0);
+                return ret;
+            } }
+
+        public unsafe readonly bool IsReadOnly => _p != null && _p->ReadOnly != null;
+
+        private unsafe readonly VariantArray VariantKeys
         {
-            public Variant Value;
-            public Entry* Next;
-            public int Hash;
+            get
+            {
+                VariantDictionary self = this;
+                VariantArray keys;
+                __InternalCalls.keys((nint)(&self), null, (nint)(&keys), 0);
+                return keys;
+            }
         }
 
-        private readonly Entry* _ptr;
-        private readonly nuint _size;
-        private nuint _count;
-        private bool _readonly;
-
-        public ICollection<Variant> Keys => throw new NotImplementedException();
-
-        public ICollection<Variant> Values => throw new NotImplementedException();
-
-        public int Count => throw new NotImplementedException();
-
-        public bool IsReadOnly => throw new NotImplementedException();
-
-        public Variant this[Variant key] { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
-
-        public void Add(Variant key, Variant value)
+        private unsafe readonly VariantArray VariantValues
         {
-            throw new NotImplementedException();
+            get
+            {
+                VariantDictionary self = this;
+                VariantArray values;
+                __InternalCalls.values((nint)(&self), null, (nint)(&values), 0);
+                return values;
+            }
         }
 
-        public bool ContainsKey(Variant key)
+        public unsafe readonly ICollection<Variant> Keys => VariantKeys;
+        public unsafe readonly ICollection<Variant> Values => VariantValues;
+        
+
+        public readonly void Add(Variant key, Variant value)
+            => this[key] = value;
+
+        public readonly void Add(KeyValuePair<Variant, Variant> item)
+            => Add(item.Key, item.Value);
+
+        public unsafe readonly bool Remove(Variant key)
         {
-            throw new NotImplementedException();
+            VariantDictionary self = this;
+            Variant* pkey = &key;
+            byte ret;
+            __InternalCalls.erase((nint)(&self), (nint*)&pkey, (nint)(&ret), 1);
+            return ret.ToBool();
         }
 
-        public bool Remove(Variant key)
+        public readonly bool Remove(KeyValuePair<Variant, Variant> item)
+            => Contains(item) && Remove(item.Key);
+
+        public unsafe readonly void Clear()
         {
-            throw new NotImplementedException();
+            VariantDictionary self = this;
+            __InternalCalls.clear((nint)(&self), null, 0, 0);
         }
 
-        public bool TryGetValue(Variant key, [MaybeNullWhen(false)] out Variant value)
+        public readonly bool Contains(KeyValuePair<Variant, Variant> item)
+            => ContainsKey(item.Key) && this[item.Key] == item.Value;
+
+        public unsafe readonly bool ContainsKey(Variant key)
         {
-            throw new NotImplementedException();
+            VariantDictionary self = this;
+            Variant* pkey = &key;
+            byte ret;
+            __InternalCalls.has((nint)(&self), (nint*)&pkey, (nint)(&ret), 1);
+            return ret.ToBool();
         }
 
-        public void Add(KeyValuePair<Variant, Variant> item)
+        public readonly void CopyTo(KeyValuePair<Variant, Variant>[] array, int arrayIndex)
         {
-            throw new NotImplementedException();
+            VariantArray keys = VariantKeys;
+            VariantArray values = VariantValues;
+
+            for (int i = 0; i < Count && arrayIndex + i < array.Length; ++i)
+                array[arrayIndex + i] = new KeyValuePair<Variant, Variant>(keys[i], values[i]);
         }
 
-        public void Clear()
+        public readonly IEnumerator<KeyValuePair<Variant, Variant>> GetEnumerator()
         {
-            throw new NotImplementedException();
+            VariantArray keys = VariantKeys;
+            for (int i = 0; i < keys.Count; i++)
+                yield return new KeyValuePair<Variant, Variant>(keys[i], this[keys[i]]);
         }
 
-        public bool Contains(KeyValuePair<Variant, Variant> item)
+        public readonly bool TryGetValue(Variant key, [MaybeNullWhen(false)] out Variant value)
         {
-            throw new NotImplementedException();
+            if (ContainsKey(key))
+            {
+                value = this[key];
+                return true;
+            }
+
+            value = default;
+            return false;
         }
 
-        public void CopyTo(KeyValuePair<Variant, Variant>[] array, int arrayIndex)
-        {
-            throw new NotImplementedException();
-        }
+        readonly IEnumerator IEnumerable.GetEnumerator()
+            => GetEnumerator();
 
-        public bool Remove(KeyValuePair<Variant, Variant> item)
+        public unsafe readonly void Dispose()
         {
-            throw new NotImplementedException();
-        }
-
-        public IEnumerator<KeyValuePair<Variant, Variant>> GetEnumerator()
-        {
-            throw new NotImplementedException();
-        }
-
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            throw new NotImplementedException();
-        }
-
-        public void Dispose()
-        {
-            throw new NotImplementedException();
-        }
-
-        public VariantDictionary(nuint capacity, bool readOnly)
-        {
-            if (capacity <= 0)
-                throw new ArgumentOutOfRangeException(nameof(capacity));
-            _size = capacity;
-            _ptr = MemUtil.Alloc<Entry>(_size);
-            _readonly = readOnly;
+            Variant var = this;
+            Main.i.VariantDestroy((nint)(&var));
         }
     }
 }

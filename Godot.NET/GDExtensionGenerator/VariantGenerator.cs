@@ -11,12 +11,14 @@ namespace GDExtensionGenerator
             String,
         }
 
-        private static void GenForType(StreamWriter w, string type, string fulltype, string data, string real, string name, string variant, ConversionType conv = ConversionType.None)
+        private static void GenForType(StreamWriter w, string type, string fulltype, string data, string real, 
+            string name, string variant, ConversionType conv = ConversionType.None)
         {
             w.Write("        /// <summary> Tries to get the <see cref=\"");
             w.Write(type);
             w.Write("\"/> value from this <see cref=\"Variant\"/>.</summary>\n");
-            w.Write("        /// <returns><see langword=\"true\"/> if successful, otherwise <see langword=\"false\"/>.</returns>\n        public readonly bool TryAs");
+            w.Write("        /// <returns><see langword=\"true\"/> if successful, otherwise ");
+            w.Write("<see langword=\"false\"/>.</returns>\n        public readonly bool TryAs");
             w.Write(name);
             w.Write("(out ");
             w.Write(fulltype);
@@ -55,7 +57,7 @@ namespace GDExtensionGenerator
 
         public static int GenerateApi(string directory)
         {
-            using FileStream fs = File.OpenWrite(Path.Join(directory, "Variant.gen.cs"));
+            using FileStream fs = File.OpenWrite(Path.Join(directory, "Variant.conv.cs"));
             using StreamWriter w = new StreamWriter(fs);
 
             w.Write(GenPrelude);
@@ -88,6 +90,13 @@ namespace GDExtensionGenerator
             GenForType(w, "Vector4I", "Godot.Vector4I", "Vector4I", "Vector4I", "Vector4I", "Vector4I");
 
             GenForType(w, "Color", "Godot.Color", "Color", "Color", "Color", "Color");
+
+            GenForType(w, "Callable", "Godot.Callable", "Callable", "Callable", "Callable", "Callable");
+            GenForType(w, "Signal", "Godot.Signal", "Signal", "Signal", "Signal", "Signal");
+            GenForType(w, "VariantDictionary", "Godot.Collections.VariantDictionary", "Dictionary",
+                "VariantDictionary", "Dictionary", "Dictionary");
+            GenForType(w, "VariantArray", "Godot.Collections.VariantArray", "Array",
+                "VariantArray", "Array", "Array");
 
             w.Write("    }\n");
             w.Write(GenPostlude);

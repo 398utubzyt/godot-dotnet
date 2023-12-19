@@ -11,34 +11,34 @@ namespace Godot
     /// not the whole strings.
     /// </summary>
     [SLayout(SLayoutOpt.Sequential)]
-    public readonly partial struct NodePath : IEquatable<NodePath>
+    public readonly partial struct Signal : IEquatable<Signal>
     {
         private readonly nint _data;
 
-        internal NodePath(nint data)
+        internal Signal(nint data)
             => _data = data;
 
         /// <inheritdoc/>
-        public static bool operator ==(NodePath a, NodePath b)
+        public static bool operator ==(Signal a, Signal b)
             => a._data == b._data;
         /// <inheritdoc/>
-        public static bool operator !=(NodePath a, NodePath b)
+        public static bool operator !=(Signal a, Signal b)
             => a._data == b._data;
 
         /// <inheritdoc/>
-        public static implicit operator string(NodePath np)
+        public static implicit operator string(Signal np)
             => np.ToString();
         /// <inheritdoc/>
-        public static implicit operator nint(NodePath sn)
+        public static implicit operator nint(Signal sn)
             => sn._data;
 
         /// <inheritdoc/>
-        public bool Equals(NodePath other)
+        public bool Equals(Signal other)
             => _data == other._data;
 
         /// <inheritdoc/>
         public override bool Equals([NotNullWhen(true)] object obj)
-            => obj is NodePath && Equals((NodePath)obj);
+            => obj is Signal && Equals((Signal)obj);
         /// <inheritdoc/>
         public override int GetHashCode()
             => _data.GetHashCode();

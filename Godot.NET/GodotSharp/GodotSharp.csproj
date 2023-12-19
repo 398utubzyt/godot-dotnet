@@ -104,8 +104,11 @@
 	  <Compile Include="CStringDB.cs" />
 	  <Compile Include="StringDB.cs" />
 	  <Compile Include="Variant\Callable.cs" />
+	  <Compile Include="Variant\Collections\VariantDictionary.native.cs" />
 	  <Compile Include="Variant\Collections\VariantDictionary.cs" />
+	  <Compile Include="Variant\Collections\VariantArray.native.cs" />
 	  <Compile Include="Variant\Collections\VariantArray.cs" />
+	  <Compile Include="Variant\Signal.cs" />
 	  <Compile Include="Variant\NodePath.cs" />
 	  <Compile Include="Variant\StringName.cs" />
 	  <Compile Include="ClassDB.cs" />

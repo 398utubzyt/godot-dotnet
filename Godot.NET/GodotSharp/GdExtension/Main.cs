@@ -175,10 +175,12 @@ namespace Godot.GdExtension
         {
             public static unsafe void Initialize()
             {
+                // TODO: Hook into Godot build system
             }
 
             public static unsafe void Deinitialize()
             {
+                // TODO: Unhook from Godot build system
             }
         }
 #endif

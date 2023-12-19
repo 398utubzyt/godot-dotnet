@@ -1,386 +1,113 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
-
-using Array = Godot.Collections.VariantArray;
 
 namespace Godot.Collections
 {
-#pragma warning disable CA1710
-    /// <inheritdoc/>
-    public unsafe class VariantArray : IList<Variant>, ICollection<Variant>, IDisposable
+    public partial struct VariantArray : IList<Variant>, IReadOnlyList<Variant>, ICollection<Variant>, IDisposable
     {
-        private class ArrayIsReadOnlyException : Exception
+        private unsafe ArrayPrivate* _p;
+
+        public unsafe readonly int Count => _p != null ? _p->Array.Size : 0;
+        public unsafe readonly bool IsReadOnly => _p != null && _p->ReadOnly != null;
+
+        public unsafe readonly Variant this[int index]
         {
-            public ArrayIsReadOnlyException() : base("Cannot modify array because it is marked as readonly (see `IsReadOnly` property).") { }
-        }
-
-        /// <summary>An empty zero-length array.</summary>
-        public static readonly Array Empty = new Array((Variant*)0, 0, true);
-
-        private Variant* _ptr;
-        private nuint _size;
-        private nuint _count;
-        private bool _readonly;
-
-        /// <inheritdoc/>
-        public static unsafe explicit operator void*(Array arr)
-            => arr._ptr;
-        /// <inheritdoc/>
-        public static unsafe explicit operator Variant*(Array arr)
-            => arr._ptr;
-        /// <inheritdoc/>
-        public static unsafe explicit operator Span<Variant>(Array arr)
-            => arr.AsSpan();
-
-        /// <inheritdoc/>
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public ref Variant GetPinnableReference()
-            => ref *_ptr;
-        /// <inheritdoc/>
-        public Span<Variant> AsSpan()
-            => MemUtil.AsSpan(_ptr, _count);
-
-        /// <inheritdoc/>
-        public unsafe Variant this[int index] { get => _ptr[index]; set => _ptr[index] = value; }
-        /// <inheritdoc/>
-        public unsafe Variant this[long index] { get => _ptr[index]; set => _ptr[index] = value; }
-        /// <inheritdoc/>
-        public unsafe Variant this[nuint index] { get => _ptr[index]; set => _ptr[index] = value; }
-
-        /// <inheritdoc/>
-        public int Count => (int)_count;
-        /// <inheritdoc/>
-        public long LongCount => (long)_count;
-
-        /// <inheritdoc/>
-        public bool IsReadOnly { get => _readonly; }
-
-        private void Resize(nuint size)
-        {
-            if (size > 0)
-                _ptr = MemUtil.Realloc(_ptr, size * (nuint)sizeof(Variant));
-            _size = size;
-        }
-        private void Increase(nuint amount)
-        {
-            _count += amount;
-            while (_size <= _count)
-                _size *= 2;
-
-            Resize(_size);
-        }
-        private void Increment()
-        {
-            if (_size == ++_count)
-                Resize(_size * 2);
-        }
-        private void Decrement()
-        {
-            if (_size > --_count * 4)
-                Resize(_size / 2);
-        }
-
-        /// <summary>Adds an item to this array.</summary>
-        /// <param name="item">The item to add.</param>
-        /// <exception cref="ArrayIsReadOnlyException"/>
-        public void Add(Variant item)
-        {
-            if (_readonly)
-                throw new ArrayIsReadOnlyException();
-            Increment();
-            _ptr[_count - 1] = item;
-        }
-
-        /// <summary>Adds a collection of items to this array.</summary>
-        /// <param name="items">The items to add.</param>
-        /// <exception cref="ArrayIsReadOnlyException"/>
-        public void AddRange(params Variant[] items)
-        {
-            if (_readonly)
-                throw new ArrayIsReadOnlyException();
-            if (items == null || items.Length == 0)
-                return;
-
-            Variant* end = _ptr + _count;
-            Increase((nuint)items.LongLength);
-
-            fixed (Variant* arr = items)
-                MemUtil.Move(arr, end, (uint)items.LongLength);
-        }
-
-        /// <summary>Removes all items from this array.</summary>
-        /// <exception cref="ArrayIsReadOnlyException"/>
-        public void Clear()
-        {
-            if (_readonly)
-                throw new ArrayIsReadOnlyException();
-            for (nuint i = 0; i < _count; i++)
+            [MImpl(MImplOpts.AggressiveInlining)]
+            get
             {
-                _ptr[i].Dispose();
-                _ptr[i] = default;
+                VariantArray self = this;
+                return *(Variant*)Main.i.ArrayOperatorIndexConst((nint)(&self), index);
+            }
+            [MImpl(MImplOpts.AggressiveInlining)]
+            set
+            {
+                VariantArray self = this;
+                *(Variant*)Main.i.ArrayOperatorIndex((nint)(&self), index) = value;
             }
         }
 
-        /// <summary>Adds an item to this array.</summary>
-        /// <param name="item">The item to search for.</param>
-        /// <returns><see langword="true"/> if <paramref name="item"/> is found within the array, otherwise <see langword="false"/>.</returns>
-        public bool Contains(Variant item)
+        [MImpl(MImplOpts.AggressiveInlining)]
+        public unsafe readonly void Add(Variant item)
         {
-            for (nuint i = 0; i < _count; i++)
-                if (_ptr[i] == item)
-                    return true;
-            return false;
+            VariantArray self = this;
+            Variant* pitem = &item;
+            __InternalCalls.push_back((nint)(&self), (nint*)&pitem, 0, 1);
         }
 
-        /// <summary>Copies the contents of this array to <paramref name="array"/> at <paramref name="arrayIndex"/>.</summary>
-        /// <param name="array">The array to copy to.</param>
-        /// <param name="arrayIndex">The index in <paramref name="array"/> to start copying to.</param>
-        /// <exception cref="ArgumentNullException"/>
-        /// <exception cref="ArgumentOutOfRangeException"/>
-        public void CopyTo(Variant[] array, int arrayIndex)
+        [MImpl(MImplOpts.AggressiveInlining)]
+        public unsafe readonly void RemoveAt(int index)
         {
-            if (array == null)
-                throw new ArgumentNullException(nameof(array));
-
-            ulong size = Math.Min(_count, (ulong)array.LongLength) - (ulong)arrayIndex;
-            if (size == 0)
-                return;
-            if (arrayIndex < 0 || (ulong)arrayIndex >= size)
-                throw new ArgumentOutOfRangeException(nameof(arrayIndex));
-
-            fixed (Variant* arr = array)
-                MemUtil.Move(_ptr, arr, (nuint)size);
+            VariantArray self = this;
+            int* pindex = &index;
+            __InternalCalls.remove_at((nint)(&self), (nint*)&pindex, 0, 1);
         }
 
-        private struct NativeEnumerator : IEnumerator<Variant>
+        [MImpl(MImplOpts.AggressiveInlining)]
+        public readonly bool Remove(Variant item)
         {
-            private readonly VariantArray _arr;
-            private nuint _index;
-
-            public readonly Variant Current => _index > 0 && _index < _arr._count ? _arr[_index] : default;
-            readonly object IEnumerator.Current => Current;
-
-            public readonly void Dispose()
-            {
-            }
-
-            public bool MoveNext()
-            {
-                _index++;
-                return _index < _arr._count;
-            }
-
-            public void Reset()
-            {
-                _index = unchecked((nuint)(-1));
-            }
-
-            public NativeEnumerator(VariantArray arr)
-            {
-                _arr = arr;
-                _index = unchecked((nuint)(-1));
-            }
+            int index = IndexOf(item);
+            if (index < 0)
+                return false;
+            RemoveAt(index);
+            return true;
         }
 
-        /// <inheritdoc/>
-        public IEnumerator<Variant> GetEnumerator()
-            => new NativeEnumerator(this);
-
-        /// <summary>Gets the index of an item in this array.</summary>
-        /// <param name="item">The item to search for.</param>
-        /// <returns>The index of <paramref name="item"/> if it is found within the array, otherwise -1.</returns>
-        public int IndexOf(Variant item)
+        [MImpl(MImplOpts.AggressiveInlining)]
+        public unsafe readonly void Clear()
         {
-            for (nuint i = 0; i < _count; i++)
-                if (_ptr[i] == item)
-                    return (int)i;
-            return -1;
+            VariantArray self = this;
+            __InternalCalls.clear((nint)(&self), null, 0, 0);
         }
 
-        /// <summary>Inserts an item into this array at <paramref name="index"/>.</summary>
-        /// <param name="index">The index to insert <paramref name="item"/> at.</param>
-        /// <param name="item">The item to add.</param>
-        /// <exception cref="ArrayIsReadOnlyException"/>
-        public void Insert(int index, Variant item)
+        [MImpl(MImplOpts.AggressiveInlining)]
+        public unsafe readonly bool Contains(Variant item)
         {
-            if (_readonly)
-                throw new ArrayIsReadOnlyException();
-            if (index < 0 || (nuint)index > _count)
-                return;
-            if ((nuint)index != _count)
-                MemUtil.Move(_ptr + index, _ptr + ++index, _count - (nuint)index);
-
-            Increment();
-            _ptr[index] = item;
+            VariantArray self = this;
+            Variant* pitem = &item;
+            byte ret;
+            __InternalCalls.has((nint)(&self), (nint*)&pitem, (nint)(&ret), 1);
+            return ret.ToBool();
         }
 
-        private void RemoveAt(nuint index)
+        public readonly void CopyTo(Variant[] array, int arrayIndex)
         {
-            _ptr[index].Dispose();
-            if (++index != _count)
-                MemUtil.Move(_ptr + --index, _ptr + index, (uint)(_count - ++index));
-            Decrement();
+            for (int i = 0; i < Count && arrayIndex + i < array.Length; ++i)
+                array[arrayIndex + i] = this[i];
         }
 
-        /// <summary>Removes <paramref name="item"/> from this array.</summary>
-        /// <param name="item">The item to remove.</param>
-        /// <returns><see langword="true"/> if <paramref name="item"/> is found and removed, otherwise <see langword="false"/>.</returns>
-        /// <exception cref="ArrayIsReadOnlyException"/>
-        public bool Remove(Variant item)
+        public readonly IEnumerator<Variant> GetEnumerator()
         {
-            if (_readonly)
-                throw new ArrayIsReadOnlyException();
-            for (nuint i = 0; i < _count; i++)
-                if (_ptr[i] == item)
-                {
-                    RemoveAt(i);
-                    return true;
-                }
-            return false;
+            for (int i = 0; i < Count; ++i)
+                yield return this[i];
         }
 
-        /// <summary>Removes the item at <paramref name="index"/> from this array.</summary>
-        /// <param name="index">The index of the item to remove.</param>
-        /// <returns><see langword="true"/> if <paramref name="index"/> is valid and the item is removed, otherwise <see langword="false"/>.</returns>
-        /// <exception cref="ArrayIsReadOnlyException"/>
-        public void RemoveAt(int index)
-        {
-            if (_readonly)
-                throw new ArrayIsReadOnlyException();
-            if (index < 0 || (nuint)index >= _count)
-                return;
-            RemoveAt((nuint)index);
-        }
-
-        IEnumerator IEnumerable.GetEnumerator()
+        readonly IEnumerator IEnumerable.GetEnumerator()
             => GetEnumerator();
 
-        private void Free()
+        [MImpl(MImplOpts.AggressiveInlining)]
+        public unsafe readonly int IndexOf(Variant item)
         {
-            MemUtil.Free(_ptr);
+            VariantArray self = this;
+            Variant* pitem = &item;
+            int ret;
+            __InternalCalls.find((nint)(&self), (nint*)&pitem, (nint)(&ret), 1);
+            return ret;
         }
 
-#pragma warning disable CA1816
-        private void ManualFree(bool elements)
+        public unsafe readonly void Insert(int index, Variant item)
         {
-            GC.SuppressFinalize(this);
-            Free();
+            VariantArray self = this;
+            nint* args = stackalloc nint[2];
+            args[0] = (nint)(&item);
+            args[1] = (nint)(&index);
+            __InternalCalls.find((nint)(&self), args, 0, 2);
         }
 
-        /// <summary>Frees this array from memory.</summary>
-        /// <remarks>Elements of this array are unaffected and need to manually be freed.</remarks>
-        public void Dispose()
+        public unsafe readonly void Dispose()
         {
-            ManualFree(false);
-        }
-
-        /// <summary>Frees this array from memory.</summary>
-        /// <remarks>
-        /// Note: If <paramref name="freeElements"/> is <see langword="true"/>, 
-        /// elements of this array are also freed along with the array.
-        /// <para/>
-        /// Otherwise, they will need to be manually freed if they are not
-        /// disposed by garbage collection (e.g. a native resource).
-        /// </remarks>
-        /// <param name="freeElements">If <see langword="true"/>, elements of this array are freed along with the array.</param>
-        public void Dispose(bool freeElements)
-        {
-            ManualFree(freeElements);
-        }
-#pragma warning restore CA1816
-
-        /// <inheritdoc/>
-        ~VariantArray()
-            => Free();
-
-        ///
-        public VariantArray() : this(false)
-        {
-        }
-        ///
-        public VariantArray(bool readOnly)
-        {
-            _size = 4;
-            _ptr = MemUtil.Alloc<Variant>(_size);
-            _readonly = readOnly;
-        }
-
-        ///
-        public VariantArray(int capacity) : this ((nuint)capacity, false)
-        {
-        }
-        ///
-        public VariantArray(long capacity) : this((nuint)capacity, false)
-        {
-        }
-        ///
-        public VariantArray(nint capacity) : this((nuint)capacity, false)
-        {
-        }
-        ///
-        public VariantArray(nuint capacity) : this(capacity, false)
-        {
-        }
-
-        ///
-        public VariantArray(int capacity, bool readOnly) : this((nuint)capacity, readOnly)
-        {
-        }
-        ///
-        public VariantArray(long capacity, bool readOnly) : this((nuint)capacity, readOnly)
-        {
-        }
-        ///
-        public VariantArray(nint capacity, bool readOnly) : this((nuint)capacity, readOnly)
-        {
-        }
-        ///
-        public VariantArray(nuint capacity, bool readOnly)
-        {
-            if (capacity == 0)
-                throw new ArgumentOutOfRangeException(nameof(capacity));
-            _size = capacity;
-            _ptr = MemUtil.Alloc<Variant>(_size);
-            _readonly = readOnly;
-        }
-
-        ///
-        public VariantArray(params Variant[] items) : this(false, items)
-        {
-        }
-        ///
-        public VariantArray(bool readOnly, params Variant[] items)
-        {
-            if (items == null || items.Length == 0)
-                throw new ArgumentException($"{nameof(items)} cannot be null or empty.");
-            _size = _count = (nuint)items.LongLength;
-            _ptr = MemUtil.Alloc<Variant>(_size);
-            AddRange(items);
-            _readonly = readOnly;
-        }
-        ///
-        public VariantArray(nuint capacity, bool readOnly, params Variant[] items)
-        {
-            if (items == null)
-                throw new ArgumentNullException(nameof(items));
-            else if (readOnly)
-            {
-            }
-            _size = _count = capacity;
-            _ptr = MemUtil.Alloc<Variant>(_size);
-            AddRange(items);
-            _readonly = readOnly;
-        }
-
-        private VariantArray(Variant* arr, nuint size, bool readOnly)
-        {
-            _ptr = arr;
-            _size = size;
-            _readonly = readOnly;
+            Variant var = this;
+            Main.i.VariantDestroy((nint)(&var));
         }
     }
 }

@@ -892,19 +892,95 @@ namespace GDExtensionGenerator
             return true;
         }
 
-        private static void WriteBuiltinClass(JToken api, string directory, string name)
+        private static void WriteBuiltinClass(JToken api, string directory, string name, string csName)
         {
-            string path = Path.Join(directory.AsSpan(), $"{name}.cs");
+            JToken bc = api.First(token => token["name"].ToString() == name);
+            if (bc == null)
+                return;
+
+            JToken[] arr = bc["methods"]?.ToArray();
+            MethodInfo[] minfo = new MethodInfo[arr?.Length ?? 0];
+            if (arr != null)
+            {
+                MethodInfo method = new MethodInfo();
+                for (int i = 0; i < arr.Length; i++)
+                {
+                    method.Params = new List<ParameterInfo>();
+
+                    method.Name = (string)arr[i]["name"];
+                    method.IsConst = (bool)arr[i]["is_const"];
+                    method.IsVarArg = (bool)arr[i]["is_vararg"];
+                    method.IsStatic = (bool)arr[i]["is_static"];
+                    method.Hash = (ulong?)arr[i]["hash"] ?? 0;
+                    method.Return = (string)arr[i]["return_type"];
+
+                    JToken[] p = arr[i]["arguments"]?.ToArray();
+                    if (p != null)
+                    {
+                        for (int j = 0; j < p.Length; j++)
+                            method.Params.Add(new ParameterInfo() { Name = (string)p[j]["name"], Type = (string)p[j]["type"], Meta = (string)p[j]["meta"] });
+                    }
+
+                    minfo[i] = method;
+                }
+            }
+
+            if (minfo.Length == 0)
+                return;
+
+            string path = Path.Join(directory.AsSpan(), $"{csName}.cs");
             using FileStream fs = File.OpenWrite(path);
             using StreamWriter w = new StreamWriter(fs);
 
-            JToken bc = api[name];
+            w.Write("namespace Godot");
+            if (name == "Array" || name == "Dictionary")
+                w.Write(".Collections");
+            w.Write("\n{\n    partial struct ");
+            w.Write(csName);
+            w.Write("\n    {\n        private static unsafe class __InternalCalls\n        {\n");
+
+            w.Write("            static __InternalCalls()\n            {\n                StringName name;\n");
+            for (int i = 0; i < minfo.Length; i++)
+            {
+                w.Write("                name = \"");
+                w.Write(minfo[i].Name);
+                w.Write("\";\n                ");
+                w.Write(minfo[i].Name);
+                w.Write(" = Main.i.VariantGetPtrBuiltinMethod(VariantType.Array, (nint)(&name), ");
+                w.Write(minfo[i].Hash);
+                w.Write("L);\n");
+            }
+            w.Write("            }\n");
+
+            for (int i = 0; i < minfo.Length; i++)
+            {
+                w.Write("\n            // ");
+                w.Write(minfo[i].Return ?? "void");
+                w.Write(" (");
+                for (int j = 0; j < minfo[i].Params.Count; j++)
+                {
+                    if (j > 0)
+                        w.Write(", ");
+                    w.Write(minfo[i].Params[j].Type);
+                    w.Write(' ');
+                    w.Write(minfo[i].Params[j].Name);
+                }
+                w.Write(")\n            public static GDExtensionPtrBuiltInMethod ");
+                w.Write(minfo[i].Name);
+                w.Write(";\n");
+            }
+            w.Write("        }\n    }\n}");
+            w.Flush();
         }
 
         private static bool GenerateBuiltinClasses(JObject api, string directory)
         {
             directory = Path.Join(directory, "../Variant/Generated/");
             JToken classes = api["builtin_classes"];
+
+            // Only generate VariantArray and VariantDictionary for now...
+            WriteBuiltinClass(classes, directory, "Array", "VariantArray");
+            WriteBuiltinClass(classes, directory, "Dictionary", "VariantDictionary");
 
             return true;
         }
@@ -920,6 +996,8 @@ namespace GDExtensionGenerator
                     return Error("Error generating global enums.");
                 if (!GenerateClasses(api, directory))
                     return Error("Error generating Godot classes.");
+                if (!GenerateBuiltinClasses(api, directory))
+                    return Error("Error generating Variant classes.");
 
             } catch (Exception e)
             {

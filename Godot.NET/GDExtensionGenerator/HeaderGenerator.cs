@@ -325,7 +325,7 @@ namespace GDExtensionGenerator
             w.Write("#pragma warning disable CS1574\n");
             w.Write("#pragma warning disable CS0618\n");
             w.Write("    [SLayout(SLayoutOpt.Sequential)]\n");
-            w.Write("    internal struct Interface\n    {\n");
+            w.Write("    internal partial struct Interface\n    {\n");
 
             DocumentationBlock block = new DocumentationBlock();
             MethodDesc method = new MethodDesc();

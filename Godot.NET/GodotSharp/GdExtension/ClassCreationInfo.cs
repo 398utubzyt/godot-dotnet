@@ -6,20 +6,20 @@
     {
         public GDExtensionBool IsVirtual;
         public GDExtensionBool IsAbstract;
-        public unsafe delegate* <GDExtensionClassSet> SetFunc;
-        public unsafe delegate* <GDExtensionClassGet> GetFunc;
-        public unsafe delegate* <GDExtensionClassGetPropertyList> GetPropertyListFunc;
-        public unsafe delegate* <GDExtensionClassFreePropertyList> FreePropertyListFunc;
-        public unsafe delegate* <GDExtensionClassPropertyCanRevert> PropertyCanRevertFunc;
-        public unsafe delegate* <GDExtensionClassPropertyGetRevert> PropertyGetRevertFunc;
-        public unsafe delegate* <GDExtensionClassNotification> NotificationFunc;
-        public unsafe delegate* <GDExtensionClassToString> ToStringFunc;
-        public unsafe delegate* <GDExtensionClassReference> ReferenceFunc;
-        public unsafe delegate* <GDExtensionClassUnreference> UnreferenceFunc;
-        public unsafe delegate* <GDExtensionClassCreateInstance> CreateInstanceFunc; // (Default) constructor; mandatory. If the class is not instantiable, consider making it virtual or abstract.
-        public unsafe delegate* <GDExtensionClassFreeInstance> FreeInstanceFunc; // Destructor; mandatory.
-        public unsafe delegate* <GDExtensionClassGetVirtual> GetVirtualFunc; // Queries a virtual function by name and returns a callback to invoke the requested virtual function.
-        public unsafe delegate* <GDExtensionClassGetRID> GetRidFunc;
+        public unsafe delegate* unmanaged<nint, nint, nint, byte> SetFunc;
+        public unsafe delegate* unmanaged<nint, nint, nint, byte> GetFunc;
+        public unsafe delegate* unmanaged<nint, uint*, PropertyInfo*> GetPropertyListFunc;
+        public unsafe delegate* unmanaged<nint, PropertyInfo*, void> FreePropertyListFunc;
+        public unsafe delegate* unmanaged<nint, nint, byte> PropertyCanRevertFunc;
+        public unsafe delegate* unmanaged<nint, nint, nint, byte> PropertyGetRevertFunc;
+        public unsafe delegate* unmanaged<nint, int, void> NotificationFunc;
+        public unsafe delegate* unmanaged<nint, byte*, nint, void> ToStringFunc;
+        public unsafe delegate* unmanaged<nint, void> ReferenceFunc;
+        public unsafe delegate* unmanaged<nint, void> UnreferenceFunc;
+        public unsafe delegate* unmanaged<void*, nint> CreateInstanceFunc; // (Default) constructor; mandatory. If the class is not instantiable, consider making it virtual or abstract.
+        public unsafe delegate* unmanaged<void*, nint, void> FreeInstanceFunc; // Destructor; mandatory.
+        public unsafe delegate* unmanaged<void*, nint, delegate* unmanaged<nint, nint*, nint>> GetVirtualFunc;
+        public unsafe delegate* unmanaged<nint, ulong> GetRidFunc;
         public unsafe void* ClassUserData; // Per-class user data, later accessible in instance bindings.
     }
 }

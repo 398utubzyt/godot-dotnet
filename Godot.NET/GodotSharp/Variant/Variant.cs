@@ -140,6 +140,10 @@ namespace Godot
             [FieldOffset(0)] public NodePath _NodePath;
             [FieldOffset(0)] public Rid _Rid;
             [FieldOffset(0)] public VarObject _Object;
+            [FieldOffset(0)] public Callable _Callable;
+            [FieldOffset(0)] public Signal _Signal;
+            [FieldOffset(0)] public VariantDictionary _Dictionary;
+            [FieldOffset(0)] public VariantArray _Array;
 
             [StructLayout(LayoutKind.Sequential)]
             public struct VarObject
@@ -261,6 +265,15 @@ namespace Godot
         /// <summary>Gets the <see cref="Godot.GodotObject"/> value of this <see cref="Variant"/>.</summary>
         public readonly unsafe GodotObject Object { [MImpl(MImplOpts.AggressiveInlining)] 
             get => ClassDB.GetOrMakeHandleFromNative(_data._Object.obj).Target as GodotObject; }
+
+        /// <summary>Gets the <see cref="Godot.Callable"/> value of this <see cref="Variant"/>.</summary>
+        public readonly Callable Callable { [MImpl(MImplOpts.AggressiveInlining)] get => (Callable)_data._Callable; }
+        /// <summary>Gets the <see cref="Godot.Callable"/> value of this <see cref="Variant"/>.</summary>
+        public readonly Signal Signal { [MImpl(MImplOpts.AggressiveInlining)] get => (Signal)_data._Signal; }
+        /// <summary>Gets the <see cref="Godot.Collections.VariantDictionary"/> value of this <see cref="Variant"/>.</summary>
+        public readonly VariantDictionary Dictionary { [MImpl(MImplOpts.AggressiveInlining)] get => (VariantDictionary)_data._Dictionary; }
+        /// <summary>Gets the <see cref="Godot.Collections.VariantArray"/> value of this <see cref="Variant"/>.</summary>
+        public readonly VariantArray Array { [MImpl(MImplOpts.AggressiveInlining)] get => (VariantArray)_data._Array; }
 
         public readonly bool TryAsObject(out GodotObject value)
         {
