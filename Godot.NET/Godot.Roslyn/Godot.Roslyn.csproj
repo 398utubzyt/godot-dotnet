@@ -6,7 +6,7 @@
     <Configurations>Debug;Release;Editor_Debug;Editor_Release;Editor_Release</Configurations>
   </PropertyGroup>
   <PropertyGroup>
-    <Description>A GDExtension port of Godot's .NET functionality with the aim of being as compatible as possible.</Description>
+    <Description>A GDExtension port of Godot's .NET functionality.</Description>
     <Authors>Godot Engine contributors</Authors>
 
     <PackageId>Godot.Roslyn</PackageId>

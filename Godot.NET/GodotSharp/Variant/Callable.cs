@@ -1,13 +1,27 @@
 ﻿using System;
 using System.Runtime.InteropServices;
 
-using static System.Runtime.InteropServices.JavaScript.JSType;
-
 namespace Godot
 {
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <remarks>
+    /// Note: the <see cref="Dispose"/> method should be used on any <see cref="Callable"/> created
+    /// by the user once it is no longer needed -- <see cref="Callable"/> lifetimes are NOT tracked
+    /// and cleaned up automatically.
+    /// <para/>
+    /// Consider using a <see langword="using"/> statement to prevent memory leaks.
+    /// </remarks>
     [SLayout(SLayoutOpt.Explicit)]
-    public readonly struct Callable
+    public readonly struct Callable : IDisposable
     {
+        private unsafe static GDExtensionPtrDestructor _dtor;
+        unsafe static Callable()
+        {
+            _dtor = (GDExtensionPtrDestructor)Main.i.VariantGetPtrDestructor(VariantType.Callable);
+        }
+
         [FieldOffset(0)]
         private readonly StringName _name;
         [FieldOffset(8)]
@@ -102,6 +116,12 @@ namespace Godot
             return obj == null ? 
                 _Create(func.Method.MethodHandle.Value, obj.Binding, obj.GetInstanceId()) : 
                 _Create(func.Method.MethodHandle.Value, 0, 0);
+        }
+
+        public unsafe void Dispose()
+        {
+            Callable self = this;
+            _dtor((nint)(&self));
         }
 
         public static unsafe explicit operator Callable(Delegate func)

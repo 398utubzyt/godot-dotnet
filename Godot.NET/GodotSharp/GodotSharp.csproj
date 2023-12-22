@@ -19,7 +19,7 @@
 		<Configurations>Debug;Release;Editor_Debug;Editor_Release;Editor_Release</Configurations>
 	</PropertyGroup>
 	<PropertyGroup>
-		<Description>A GDExtension port of Godot's .NET functionality with the aim of being as compatible as possible.</Description>
+		<Description>A GDExtension port of Godot's .NET functionality.</Description>
 		<Authors>Godot Engine contributors</Authors>
 
 		<PackageId>Godot.NET</PackageId>
@@ -104,6 +104,10 @@
 	  <Compile Include="CStringDB.cs" />
 	  <Compile Include="StringDB.cs" />
 	  <Compile Include="Variant\Callable.cs" />
+	  <Compile Include="Variant\Collections\PackedArray.cs" />
+	  <Compile Include="Variant\Collections\TypedArray.cs" />
+	  <Compile Include="Variant\Collections\TypedArray.api.cs" />
+	  <Compile Include="Variant\Collections\VariantArray.api.cs" />
 	  <Compile Include="Variant\Collections\VariantDictionary.native.cs" />
 	  <Compile Include="Variant\Collections\VariantDictionary.cs" />
 	  <Compile Include="Variant\Collections\VariantArray.native.cs" />

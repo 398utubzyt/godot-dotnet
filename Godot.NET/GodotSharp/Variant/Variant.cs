@@ -5,9 +5,31 @@ using System.Runtime.InteropServices;
 namespace Godot
 {
 #pragma warning disable CA1720
+#if GODOT_REAL_T_IS_DOUBLE
     /// <summary>
-    /// The most important data type in Godot.
+    /// Variant is the most important datatype of Godot, it's the most important class in the engine.
+    /// A Variant takes up only 40 bytes and can store almost any engine datatype inside of it.
+    /// Variants are rarely used to hold information for long periods of time, instead they are used
+    /// mainly for communication, editing, serialization and generally moving data around.
     /// </summary>
+    /// <remarks>
+    /// Note: the <see cref="Variant.Dispose"/> method should be used on any <see cref="Variant"/> created
+    /// by the user once it is no longer needed -- <see cref="Variant"/> lifetimes are NOT tracked and cleaned
+    /// up automatically. Consider using a <see langword="using"/> statement to prevent memory leaks.
+    /// </remarks>
+#else
+    /// <summary>
+    /// Variant is the most important datatype of Godot, it's the most important class in the engine.
+    /// A Variant takes up only 24 bytes and can store almost any engine datatype inside of it.
+    /// Variants are rarely used to hold information for long periods of time, instead they are used
+    /// mainly for communication, editing, serialization and generally moving data around.
+    /// </summary>
+    /// <remarks>
+    /// Note: the <see cref="Variant.Dispose"/> method should be used on any <see cref="Variant"/> created
+    /// by the user once it is no longer needed -- <see cref="Variant"/> lifetimes are NOT tracked and cleaned
+    /// up automatically. Consider using a <see langword="using"/> statement to prevent memory leaks.
+    /// </remarks>
+#endif
     [SLayout(SLayoutOpt.Explicit)]
     public partial struct Variant : IEquatable<Variant>, IDisposable
     {
@@ -112,7 +134,7 @@ namespace Godot
         [SLayout(SLayoutOpt.Explicit)]
         private unsafe struct UnionData : IEquatable<UnionData>
         {
-            [FieldOffset(0)] public bool _bool;
+            [FieldOffset(0)] public byte _bool;
             [FieldOffset(0)] public long _int;
             [FieldOffset(0)] public double _float;
             [FieldOffset(0)] public nint _nint;
@@ -144,6 +166,7 @@ namespace Godot
             [FieldOffset(0)] public Signal _Signal;
             [FieldOffset(0)] public VariantDictionary _Dictionary;
             [FieldOffset(0)] public VariantArray _Array;
+            [FieldOffset(0)] public PackedArrayRef* _Packed;
 
             [StructLayout(LayoutKind.Sequential)]
             public struct VarObject
@@ -161,6 +184,148 @@ namespace Godot
                 public Real _mem3;
             }
 
+            public static class LargeMemHelper
+            {
+                private static readonly delegate* unmanaged<nint, nint, void> _ctorTransform2d;
+                private static readonly delegate* unmanaged<nint, nint, void> _ctorTransform3d;
+                private static readonly delegate* unmanaged<nint, nint, void> _ctorAabb;
+                private static readonly delegate* unmanaged<nint, nint, void> _ctorBasis;
+                private static readonly delegate* unmanaged<nint, nint, void> _ctorProjection;
+
+                static LargeMemHelper()
+                {
+                    _ctorTransform2d = Main.i.GetVariantFromTypeConstructor(Type.Transform2D);
+                    _ctorTransform3d = Main.i.GetVariantFromTypeConstructor(Type.Transform3D);
+                    _ctorAabb = Main.i.GetVariantFromTypeConstructor(Type.AABB);
+                    _ctorBasis = Main.i.GetVariantFromTypeConstructor(Type.Basis);
+                    _ctorProjection = Main.i.GetVariantFromTypeConstructor(Type.Projection);
+                }
+
+                public static Variant Create(Transform2D value)
+                {
+                    Variant var;
+                    _ctorTransform2d((nint)(&var), (nint)(&value));
+                    return var;
+                }
+                public static Variant Create(Transform3D value)
+                {
+                    Variant var;
+                    _ctorTransform3d((nint)(&var), (nint)(&value));
+                    return var;
+                }
+                public static Variant Create(Aabb value)
+                {
+                    Variant var;
+                    _ctorAabb((nint)(&var), (nint)(&value));
+                    return var;
+                }
+                public static Variant Create(Basis value)
+                {
+                    Variant var;
+                    _ctorBasis((nint)(&var), (nint)(&value));
+                    return var;
+                }
+                public static Variant Create(Projection value)
+                {
+                    Variant var;
+                    _ctorProjection((nint)(&var), (nint)(&value));
+                    return var;
+                }
+            }
+
+            [StructLayout(LayoutKind.Sequential)]
+            public struct PackedArrayRef
+            {
+                public int RefCount;
+                private PackedVector<byte> _array;
+
+                public readonly bool IsValid
+                {
+                    [MImpl(MImplOpts.AggressiveInlining)]
+                    get => _array.CowData != null;
+                }
+
+                public PackedByteArray ByteArray { [MImpl(MImplOpts.AggressiveInlining)]
+                    get => IsValid ? MemUtil.As<PackedVector<byte>, PackedByteArray>(ref _array) : default; }
+                public PackedColorArray ColorArray { [MImpl(MImplOpts.AggressiveInlining)]
+                    get => IsValid ? MemUtil.As<PackedVector<byte>, PackedColorArray>(ref _array) : default; }
+                public PackedFloat32Array Float32Array { [MImpl(MImplOpts.AggressiveInlining)]
+                    get => IsValid ? MemUtil.As<PackedVector<byte>, PackedFloat32Array>(ref _array) : default; }
+                public PackedFloat64Array Float64Array { [MImpl(MImplOpts.AggressiveInlining)]
+                    get => IsValid ? MemUtil.As<PackedVector<byte>, PackedFloat64Array>(ref _array) : default; }
+                public PackedInt32Array Int32Array { [MImpl(MImplOpts.AggressiveInlining)]
+                    get => IsValid ? MemUtil.As<PackedVector<byte>, PackedInt32Array>(ref _array) : default; }
+                public PackedInt64Array Int64Array { [MImpl(MImplOpts.AggressiveInlining)]
+                    get => IsValid ? MemUtil.As<PackedVector<byte>, PackedInt64Array>(ref _array) : default; }
+                public PackedStringArray StringArray { [MImpl(MImplOpts.AggressiveInlining)]
+                    get => IsValid ? MemUtil.As<PackedVector<byte>, PackedStringArray>(ref _array) : default; }
+                public PackedVector2Array Vector2Array { [MImpl(MImplOpts.AggressiveInlining)]
+                    get => IsValid ? MemUtil.As<PackedVector<byte>, PackedVector2Array>(ref _array) : default; }
+                public PackedVector3Array Vector3Array { [MImpl(MImplOpts.AggressiveInlining)]
+                    get => IsValid ? MemUtil.As<PackedVector<byte>, PackedVector3Array>(ref _array) : default; }
+
+                public static PackedArrayRef* Create()
+                {
+                    PackedArrayRef* mem = MemUtil.GodotAlloc<PackedArrayRef>(1);
+                    mem->RefCount = 1;
+                    return mem;
+                }
+                public static PackedArrayRef* Create(PackedByteArray arr)
+                {
+                    PackedArrayRef* mem = Create();
+                    mem->_array = MemUtil.As<PackedByteArray, PackedVector<byte>>(ref arr);
+                    return mem;
+                }
+                public static PackedArrayRef* Create(PackedColorArray arr)
+                {
+                    PackedArrayRef* mem = Create();
+                    mem->_array = MemUtil.As<PackedColorArray, PackedVector<byte>>(ref arr);
+                    return mem;
+                }
+                public static PackedArrayRef* Create(PackedFloat32Array arr)
+                {
+                    PackedArrayRef* mem = Create();
+                    mem->_array = MemUtil.As<PackedFloat32Array, PackedVector<byte>>(ref arr);
+                    return mem;
+                }
+                public static PackedArrayRef* Create(PackedFloat64Array arr)
+                {
+                    PackedArrayRef* mem = Create();
+                    mem->_array = MemUtil.As<PackedFloat64Array, PackedVector<byte>>(ref arr);
+                    return mem;
+                }
+                public static PackedArrayRef* Create(PackedInt32Array arr)
+                {
+                    PackedArrayRef* mem = Create();
+                    mem->_array = MemUtil.As<PackedInt32Array, PackedVector<byte>>(ref arr);
+                    return mem;
+                }
+                public static PackedArrayRef* Create(PackedInt64Array arr)
+                {
+                    PackedArrayRef* mem = Create();
+                    mem->_array = MemUtil.As<PackedInt64Array, PackedVector<byte>>(ref arr);
+                    return mem;
+                }
+                public static PackedArrayRef* Create(PackedStringArray arr)
+                {
+                    PackedArrayRef* mem = Create();
+                    mem->_array = MemUtil.As<PackedStringArray, PackedVector<byte>>(ref arr);
+                    return mem;
+                }
+                public static PackedArrayRef* Create(PackedVector2Array arr)
+                {
+                    PackedArrayRef* mem = Create();
+                    mem->_array = MemUtil.As<PackedVector2Array, PackedVector<byte>>(ref arr);
+                    return mem;
+                }
+                public static PackedArrayRef* Create(PackedVector3Array arr)
+                {
+                    PackedArrayRef* mem = Create();
+                    mem->_array = MemUtil.As<PackedVector3Array, PackedVector<byte>>(ref arr);
+                    return mem;
+                }
+            }
+
             public override readonly int GetHashCode()
                 => _Mem.GetHashCode();
             public override readonly bool Equals([NotNullWhen(true)] object obj)
@@ -172,23 +337,32 @@ namespace Godot
                    _Mem._mem3 == other._Mem._mem3;
         }
 
-        public static readonly Variant Null = new Variant();
+        public static readonly Variant Null = default;
 
         /// <summary>The type of this <see cref="Variant"/>.</summary>
         public readonly VariantType VariantType => _type;
-        /// <summary>The type of this <see cref="Variant"/>.</summary>
-        public readonly unsafe bool IsValid => _type switch {
+        /// <summary><see langword="true"/> if this <see cref="Variant"/> is valid. Otherwise <see langword="false"/>.</summary>
+        public unsafe readonly bool IsValid => _type switch {
             VariantType.Transform2D => _data._Transform2D != (void*)0,
             VariantType.Transform3D => _data._Transform3D != (void*)0,
             VariantType.AABB => _data._Aabb != (void*)0,
             VariantType.Basis => _data._Basis != (void*)0,
             VariantType.Projection => _data._Projection != (void*)0,
             VariantType.Object => _data._nint != nint.Zero,
+            VariantType.PackedByteArray => _data._Packed != null && _data._Packed->IsValid,
+            VariantType.PackedColorArray => _data._Packed != null && _data._Packed->IsValid,
+            VariantType.PackedFloat32Array => _data._Packed != null && _data._Packed->IsValid,
+            VariantType.PackedFloat64Array => _data._Packed != null && _data._Packed->IsValid,
+            VariantType.PackedInt32Array => _data._Packed != null && _data._Packed->IsValid,
+            VariantType.PackedInt64Array => _data._Packed != null && _data._Packed->IsValid,
+            VariantType.PackedStringArray => _data._Packed != null && _data._Packed->IsValid,
+            VariantType.PackedVector2Array => _data._Packed != null && _data._Packed->IsValid,
+            VariantType.PackedVector3Array => _data._Packed != null && _data._Packed->IsValid,
             _ => true,
         };
 
         /// <summary>Gets the <see cref="sbyte"/> value of this <see cref="Variant"/>.</summary>
-        public readonly bool Bool { [MImpl(MImplOpts.AggressiveInlining)] get => (bool)_data._bool; }
+        public readonly bool Bool { [MImpl(MImplOpts.AggressiveInlining)] get => _data._bool.ToBool(); }
 
         /// <summary>Gets the <see cref="sbyte"/> value of this <see cref="Variant"/>.</summary>
         public readonly sbyte Int8 { [MImpl(MImplOpts.AggressiveInlining)] get => (sbyte)_data._int; }
@@ -226,54 +400,84 @@ namespace Godot
         public readonly NodePath NodePath { [MImpl(MImplOpts.AggressiveInlining)] get => _data._NodePath; }
 
         /// <summary>Gets the <see cref="Godot.Vector2"/> value of this <see cref="Variant"/>.</summary>
-        public readonly Vector2 Vector2 { [MImpl(MImplOpts.AggressiveInlining)] get => (Vector2)_data._Vector2; }
+        public readonly Vector2 Vector2 { [MImpl(MImplOpts.AggressiveInlining)] get => _data._Vector2; }
         /// <summary>Gets the <see cref="Godot.Vector3"/> value of this <see cref="Variant"/>.</summary>
-        public readonly Vector3 Vector3 { [MImpl(MImplOpts.AggressiveInlining)] get => (Vector3)_data._Vector3; }
+        public readonly Vector3 Vector3 { [MImpl(MImplOpts.AggressiveInlining)] get => _data._Vector3; }
         /// <summary>Gets the <see cref="Godot.Vector4"/> value of this <see cref="Variant"/>.</summary>
-        public readonly Vector4 Vector4 { [MImpl(MImplOpts.AggressiveInlining)] get => (Vector4)_data._Vector4; }
+        public readonly Vector4 Vector4 { [MImpl(MImplOpts.AggressiveInlining)] get => _data._Vector4; }
 
         /// <summary>Gets the <see cref="Godot.Vector2I"/> value of this <see cref="Variant"/>.</summary>
-        public readonly Vector2I Vector2I { [MImpl(MImplOpts.AggressiveInlining)] get => (Vector2I)_data._Vector2I; }
+        public readonly Vector2I Vector2I { [MImpl(MImplOpts.AggressiveInlining)] get => _data._Vector2I; }
         /// <summary>Gets the <see cref="Godot.Vector3I"/> value of this <see cref="Variant"/>.</summary>
-        public readonly Vector3I Vector3I { [MImpl(MImplOpts.AggressiveInlining)] get => (Vector3I)_data._Vector3I; }
+        public readonly Vector3I Vector3I { [MImpl(MImplOpts.AggressiveInlining)] get => _data._Vector3I; }
         /// <summary>Gets the <see cref="Godot.Vector4I"/> value of this <see cref="Variant"/>.</summary>
-        public readonly Vector4I Vector4I { [MImpl(MImplOpts.AggressiveInlining)] get => (Vector4I)_data._Vector4I; }
+        public readonly Vector4I Vector4I { [MImpl(MImplOpts.AggressiveInlining)] get => _data._Vector4I; }
 
         /// <summary>Gets the <see cref="Godot.Color"/> value of this <see cref="Variant"/>.</summary>
-        public readonly Color Color { [MImpl(MImplOpts.AggressiveInlining)] get => (Color)_data._Color; }
+        public readonly Color Color { [MImpl(MImplOpts.AggressiveInlining)] get => _data._Color; }
 
         /// <summary>Gets the <see cref="Godot.Rect2"/> value of this <see cref="Variant"/>.</summary>
-        public readonly Rect2 Rect2 { [MImpl(MImplOpts.AggressiveInlining)] get => (Rect2)_data._Rect2; }
+        public readonly Rect2 Rect2 { [MImpl(MImplOpts.AggressiveInlining)] get => _data._Rect2; }
         /// <summary>Gets the <see cref="Godot.Rect2I"/> value of this <see cref="Variant"/>.</summary>
-        public readonly Rect2I Rect2I { [MImpl(MImplOpts.AggressiveInlining)] get => (Rect2I)_data._Rect2I; }
+        public readonly Rect2I Rect2I { [MImpl(MImplOpts.AggressiveInlining)] get => _data._Rect2I; }
         /// <summary>Gets the <see cref="Godot.Aabb"/> value of this <see cref="Variant"/>.</summary>
-        public unsafe Aabb Aabb { [MImpl(MImplOpts.AggressiveInlining)] get => (Aabb)(*_data._Aabb); }
+        public unsafe Aabb Aabb { [MImpl(MImplOpts.AggressiveInlining)] get => *_data._Aabb; }
 
         /// <summary>Gets the <see cref="Godot.Quaternion"/> value of this <see cref="Variant"/>.</summary>
-        public readonly Quaternion Quaternion { [MImpl(MImplOpts.AggressiveInlining)] get => (Quaternion)_data._Quaternion; }
+        public readonly Quaternion Quaternion { [MImpl(MImplOpts.AggressiveInlining)] get => _data._Quaternion; }
         /// <summary>Gets the <see cref="Godot.Plane"/> value of this <see cref="Variant"/>.</summary>
-        public readonly Plane Plane { [MImpl(MImplOpts.AggressiveInlining)] get => (Plane)_data._Plane; }
+        public readonly Plane Plane { [MImpl(MImplOpts.AggressiveInlining)] get => _data._Plane; }
 
         /// <summary>Gets the <see cref="Godot.Basis"/> value of this <see cref="Variant"/>.</summary>
-        public readonly unsafe Basis Basis { [MImpl(MImplOpts.AggressiveInlining)] get => (Basis)(*_data._Basis); }
+        public readonly unsafe Basis Basis { [MImpl(MImplOpts.AggressiveInlining)] get => *_data._Basis; }
         /// <summary>Gets the <see cref="Godot.Projection"/> value of this <see cref="Variant"/>.</summary>
-        public readonly unsafe Projection Projection { [MImpl(MImplOpts.AggressiveInlining)] get => (Projection)(*_data._Projection); }
+        public readonly unsafe Projection Projection { [MImpl(MImplOpts.AggressiveInlining)] get => *_data._Projection; }
         /// <summary>Gets the <see cref="Godot.Transform2D"/> value of this <see cref="Variant"/>.</summary>
-        public readonly unsafe Transform2D Transform2D { [MImpl(MImplOpts.AggressiveInlining)] get => (Transform2D)(*_data._Transform2D); }
+        public readonly unsafe Transform2D Transform2D { [MImpl(MImplOpts.AggressiveInlining)] get => *_data._Transform2D; }
         /// <summary>Gets the <see cref="Godot.Transform3D"/> value of this <see cref="Variant"/>.</summary>
-        public readonly unsafe Transform3D Transform3D { [MImpl(MImplOpts.AggressiveInlining)] get => (Transform3D)(*_data._Transform3D); }
+        public readonly unsafe Transform3D Transform3D { [MImpl(MImplOpts.AggressiveInlining)] get => *_data._Transform3D; }
         /// <summary>Gets the <see cref="Godot.GodotObject"/> value of this <see cref="Variant"/>.</summary>
         public readonly unsafe GodotObject Object { [MImpl(MImplOpts.AggressiveInlining)] 
             get => ClassDB.GetOrMakeHandleFromNative(_data._Object.obj).Target as GodotObject; }
 
+        /// <summary>Gets the <see cref="Godot.Rid"/> value of this <see cref="Variant"/>.</summary>
+        public readonly Rid Rid { [MImpl(MImplOpts.AggressiveInlining)] get => _data._Rid; }
         /// <summary>Gets the <see cref="Godot.Callable"/> value of this <see cref="Variant"/>.</summary>
-        public readonly Callable Callable { [MImpl(MImplOpts.AggressiveInlining)] get => (Callable)_data._Callable; }
-        /// <summary>Gets the <see cref="Godot.Callable"/> value of this <see cref="Variant"/>.</summary>
-        public readonly Signal Signal { [MImpl(MImplOpts.AggressiveInlining)] get => (Signal)_data._Signal; }
+        public readonly Callable Callable { [MImpl(MImplOpts.AggressiveInlining)] get => _data._Callable; }
+        /// <summary>Gets the <see cref="Godot.Signal"/> value of this <see cref="Variant"/>.</summary>
+        public readonly Signal Signal { [MImpl(MImplOpts.AggressiveInlining)] get => _data._Signal; }
         /// <summary>Gets the <see cref="Godot.Collections.VariantDictionary"/> value of this <see cref="Variant"/>.</summary>
-        public readonly VariantDictionary Dictionary { [MImpl(MImplOpts.AggressiveInlining)] get => (VariantDictionary)_data._Dictionary; }
+        public readonly VariantDictionary Dictionary { [MImpl(MImplOpts.AggressiveInlining)] get => _data._Dictionary; }
         /// <summary>Gets the <see cref="Godot.Collections.VariantArray"/> value of this <see cref="Variant"/>.</summary>
-        public readonly VariantArray Array { [MImpl(MImplOpts.AggressiveInlining)] get => (VariantArray)_data._Array; }
+        public readonly VariantArray Array { [MImpl(MImplOpts.AggressiveInlining)] get => _data._Array; }
+
+        /// <summary>Gets the <see cref="Godot.Collections.PackedByteArray"/> value of this <see cref="Variant"/>.</summary>
+        public unsafe readonly PackedByteArray PackedByteArray {
+            [MImpl(MImplOpts.AggressiveInlining)] get => IsValid ? _data._Packed->ByteArray : default; }
+        /// <summary>Gets the <see cref="Godot.Collections.PackedColorArray"/> value of this <see cref="Variant"/>.</summary>
+        public unsafe readonly PackedColorArray PackedColorArray {
+            [MImpl(MImplOpts.AggressiveInlining)] get => IsValid ? _data._Packed->ColorArray : default; }
+        /// <summary>Gets the <see cref="Godot.Collections.PackedFloat32Array"/> value of this <see cref="Variant"/>.</summary>
+        public unsafe readonly PackedFloat32Array PackedFloat32Array {
+            [MImpl(MImplOpts.AggressiveInlining)] get => IsValid ? _data._Packed->Float32Array : default; }
+        /// <summary>Gets the <see cref="Godot.Collections.PackedFloat64Array"/> value of this <see cref="Variant"/>.</summary>
+        public unsafe readonly PackedFloat64Array PackedFloat64Array {
+            [MImpl(MImplOpts.AggressiveInlining)] get => IsValid ? _data._Packed->Float64Array : default; }
+        /// <summary>Gets the <see cref="Godot.Collections.PackedInt32Array"/> value of this <see cref="Variant"/>.</summary>
+        public unsafe readonly PackedInt32Array PackedInt32Array {
+            [MImpl(MImplOpts.AggressiveInlining)] get => IsValid ? _data._Packed->Int32Array : default; }
+        /// <summary>Gets the <see cref="Godot.Collections.PackedInt64Array"/> value of this <see cref="Variant"/>.</summary>
+        public unsafe readonly PackedInt64Array PackedInt64Array {
+            [MImpl(MImplOpts.AggressiveInlining)] get => IsValid ? _data._Packed->Int64Array : default; }
+        /// <summary>Gets the <see cref="Godot.Collections.PackedStringArray"/> value of this <see cref="Variant"/>.</summary>
+        public unsafe readonly PackedStringArray PackedStringArray {
+            [MImpl(MImplOpts.AggressiveInlining)] get => IsValid ? _data._Packed->StringArray : default; }
+        /// <summary>Gets the <see cref="Godot.Collections.PackedVector2Array"/> value of this <see cref="Variant"/>.</summary>
+        public unsafe readonly PackedVector2Array PackedVector2Array {
+            [MImpl(MImplOpts.AggressiveInlining)] get => IsValid ? _data._Packed->Vector2Array : default; }
+        /// <summary>Gets the <see cref="Godot.Collections.PackedVector3Array"/> value of this <see cref="Variant"/>.</summary>
+        public unsafe readonly PackedVector3Array PackedVector3Array {
+            [MImpl(MImplOpts.AggressiveInlining)] get => IsValid ? _data._Packed->Vector3Array : default; }
 
         public readonly bool TryAsObject(out GodotObject value)
         {
@@ -328,6 +532,7 @@ namespace Godot
                 "System.String" => TryAsString(out MemUtil.As<T, string>(ref value)),
                 "Godot.StringName" => TryAsStringName(out MemUtil.As<T, StringName>(ref value)),
                 "Godot.NodePath" => TryAsNodePath(out MemUtil.As<T, NodePath>(ref value)),
+
                 "Godot.Vector2" => TryAsVector2(out MemUtil.As<T, Vector2>(ref value)),
                 "Godot.Vector3" => TryAsVector3(out MemUtil.As<T, Vector3>(ref value)),
                 "Godot.Vector4" => TryAsVector4(out MemUtil.As<T, Vector4>(ref value)),
@@ -335,7 +540,90 @@ namespace Godot
                 "Godot.Vector3I" => TryAsVector3I(out MemUtil.As<T, Vector3I>(ref value)),
                 "Godot.Vector4I" => TryAsVector4I(out MemUtil.As<T, Vector4I>(ref value)),
                 "Godot.Color" => TryAsColor(out MemUtil.As<T, Color>(ref value)),
+
+                "Godot.Rect2" => TryAsRect2(out MemUtil.As<T, Rect2>(ref value)),
+                "Godot.Rect2I" => TryAsRect2I(out MemUtil.As<T, Rect2I>(ref value)),
+                "Godot.Aabb" => TryAsAabb(out MemUtil.As<T, Aabb>(ref value)),
+                "Godot.Quaternion" => TryAsQuaternion(out MemUtil.As<T, Quaternion>(ref value)),
+                "Godot.Plane" => TryAsPlane(out MemUtil.As<T, Plane>(ref value)),
+                "Godot.Basis" => TryAsBasis(out MemUtil.As<T, Basis>(ref value)),
+                "Godot.Projection" => TryAsProjection(out MemUtil.As<T, Projection>(ref value)),
+                "Godot.Transform2D" => TryAsTransform2D(out MemUtil.As<T, Transform2D>(ref value)),
+                "Godot.Transform3D" => TryAsTransform3D(out MemUtil.As<T, Transform3D>(ref value)),
+
+                "Godot.Rid" => TryAsRid(out MemUtil.As<T, Rid>(ref value)),
+                "Godot.Callable" => TryAsCallable(out MemUtil.As<T, Callable>(ref value)),
+                "Godot.Signal" => TryAsSignal(out MemUtil.As<T, Signal>(ref value)),
+                "Godot.Collections.VariantArray" => TryAsArray(out MemUtil.As<T, VariantArray>(ref value)),
+                "Godot.Collections.VariantDictionary" => TryAsDictionary(out MemUtil.As<T, VariantDictionary>(ref value)),
+                "Godot.Collections.PackedByteArray" => TryAsPackedByteArray(out MemUtil.As<T, PackedByteArray>(ref value)),
+                "Godot.Collections.PackedColorArray" => TryAsPackedColorArray(out MemUtil.As<T, PackedColorArray>(ref value)),
+                "Godot.Collections.PackedFloat32Array" => TryAsPackedFloat32Array(out MemUtil.As<T, PackedFloat32Array>(ref value)),
+                "Godot.Collections.PackedFloat64Array" => TryAsPackedFloat64Array(out MemUtil.As<T, PackedFloat64Array>(ref value)),
+                "Godot.Collections.PackedInt32Array" => TryAsPackedInt32Array(out MemUtil.As<T, PackedInt32Array>(ref value)),
+                "Godot.Collections.PackedInt64Array" => TryAsPackedInt64Array(out MemUtil.As<T, PackedInt64Array>(ref value)),
+                "Godot.Collections.PackedStringArray" => TryAsPackedStringArray(out MemUtil.As<T, PackedStringArray>(ref value)),
+                "Godot.Collections.PackedVector2Array" => TryAsPackedVector2Array(out MemUtil.As<T, PackedVector2Array>(ref value)),
+                "Godot.Collections.PackedVector3Array" => TryAsPackedVector3Array(out MemUtil.As<T, PackedVector3Array>(ref value)),
                 _ => typeof(T).IsAssignableTo(typeof(GodotObject)) && SafeTryAsObject(in this, ref value)
+            };
+        }
+
+        public static unsafe VariantType TypeOf<[MustBeVariant] T>()
+        {
+            return typeof(T).FullName switch
+            {
+                "System.Boolean" => VariantType.Bool,
+                "System.SByte" => VariantType.Int,
+                "System.Byte" => VariantType.Int,
+                "System.Int16" => VariantType.Int,
+                "System.UInt16" => VariantType.Int,
+                "System.Int32" => VariantType.Int,
+                "System.UInt32" => VariantType.Int,
+                "System.Int64" => VariantType.Int,
+                "System.UInt64" => VariantType.Int,
+                "System.Single" => VariantType.Float,
+                "System.Double" => VariantType.Float,
+                "System.String" => VariantType.String,
+                "Godot.StringName" => VariantType.StringName,
+                "Godot.NodePath" => VariantType.NodePath,
+
+                "Godot.Vector2" => VariantType.Vector2,
+                "Godot.Vector3" => VariantType.Vector3,
+                "Godot.Vector4" => VariantType.Vector4,
+                "Godot.Vector2I" => VariantType.Vector2I,
+                "Godot.Vector3I" => VariantType.Vector3I,
+                "Godot.Vector4I" => VariantType.Vector4I,
+                "Godot.Color" => VariantType.Color,
+
+                "Godot.Rect2" => VariantType.Rect2,
+                "Godot.Rect2I" => VariantType.Rect2I,
+                "Godot.Aabb" => VariantType.AABB,
+                "Godot.Quaternion" => VariantType.Quaternion,
+                "Godot.Plane" => VariantType.Plane,
+                "Godot.Basis" => VariantType.Basis,
+                "Godot.Projection" => VariantType.Projection,
+                "Godot.Transform2D" => VariantType.Transform2D,
+                "Godot.Transform3D" => VariantType.Transform3D,
+
+                "Godot.Rid" => VariantType.Rid,
+                "Godot.Callable" => VariantType.Callable,
+                "Godot.Signal" => VariantType.Signal,
+                "Godot.Collections.VariantArray" => VariantType.Array,
+                "Godot.Collections.VariantDictionary" => VariantType.Dictionary,
+                "Godot.Collections.PackedByteArray" => VariantType.PackedByteArray,
+                "Godot.Collections.PackedColorArray" => VariantType.PackedColorArray,
+                "Godot.Collections.PackedFloat32Array" => VariantType.PackedFloat32Array,
+                "Godot.Collections.PackedFloat64Array" => VariantType.PackedFloat64Array,
+                "Godot.Collections.PackedInt32Array" => VariantType.PackedInt32Array,
+                "Godot.Collections.PackedInt64Array" => VariantType.PackedInt64Array,
+                "Godot.Collections.PackedStringArray" => VariantType.PackedStringArray,
+                "Godot.Collections.PackedVector2Array" => VariantType.PackedVector2Array,
+                "Godot.Collections.PackedVector3Array" => VariantType.PackedVector3Array,
+                _=> typeof(T).FullName.StartsWith("Godot.Collections.TypedArray`1", StringComparison.Ordinal) ? VariantType.Array : (
+                    typeof(T).FullName.StartsWith("Godot.Collections.TypedDictionary`1", StringComparison.Ordinal) ? VariantType.Dictionary : (
+                    typeof(T).IsAssignableTo(typeof(GodotObject)) ? VariantType.Object : VariantType.Nil
+                ))
             };
         }
 
@@ -343,7 +631,7 @@ namespace Godot
         {
             return typeof(T).FullName switch
             {
-                "System.Boolean" => value is bool t ? t : false,
+                "System.Boolean" => value is bool t && t,
                 "System.SByte" => value is sbyte t ? t : (sbyte)0,
                 "System.Byte" => value is byte t ? t : (byte)0,
                 "System.Int16" => value is short t ? t : (short)0,
@@ -391,7 +679,7 @@ namespace Godot
         /// <inheritdoc/>
         public readonly bool Equals(Variant other)
             => _type == other._type && _data.Equals(other._data);
-        public override string ToString()
+        public override readonly string ToString()
         {
             // Fixed address
             Variant self = this;
@@ -404,7 +692,7 @@ namespace Godot
         }
 
         /// <summary>Frees the resource controlled by this <see cref="Variant"/>.</summary>
-        public void Dispose()
+        public readonly void Dispose()
         {
             unsafe
             {

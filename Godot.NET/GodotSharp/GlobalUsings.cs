@@ -56,14 +56,3 @@ global using VariantOp = Godot.Variant.Operator;
 global using Godot.Collections;
 global using Godot.GdExtension;
 global using Godot.Interop;
-
-global using PackedByteArray = byte[];
-global using PackedInt32Array = int[];
-global using PackedInt64Array = long[];
-global using PackedFloat32Array = float[];
-global using PackedFloat64Array = double[];
-global using PackedStringArray = string[];
-
-global using PackedVector2Array = Godot.Vector2[];
-global using PackedVector3Array = Godot.Vector3[];
-global using PackedColorArray = Godot.Color[];

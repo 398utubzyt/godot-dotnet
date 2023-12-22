@@ -8,7 +8,7 @@
     <Version>4.2.0</Version>
     <Authors>Godot.NET Contributors</Authors>
     <Company />
-    <Description>A GDExtension port of Godot's .NET functionality with the aim of being as compatible as possible.</Description>
+    <Description>A GDExtension port of Godot's .NET functionality.</Description>
     <RepositoryUrl>https://github.com/398utubzyt/godot-dotnet/tree/main/Godot.NET/Godot.NET.Sdk</RepositoryUrl>
     <PackageProjectUrl>$(RepositoryUrl)</PackageProjectUrl>
     <PackageTags>MSBuildSdk</PackageTags>

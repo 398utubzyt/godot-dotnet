@@ -100,6 +100,9 @@ namespace Godot.GdExtension
         [MImpl(MImplOpts.AggressiveInlining)]
         public static ReadOnlySpan<T> AsConstSpan<T>(ref T from, nuint count)
             => MemoryMarshal.CreateReadOnlySpan(ref from, (int)count);
+        [MImpl(MImplOpts.AggressiveInlining)]
+        public static ReadOnlySpan<T> AsConstSpan<T>(Span<T> from)
+            => MemoryMarshal.CreateReadOnlySpan(ref from.GetRef(), from.Length);
 
         [MImpl(MImplOpts.AggressiveInlining)]
         public static string ToString(byte* from, nuint count)
@@ -171,6 +174,26 @@ namespace Godot.GdExtension
         [MImpl(MImplOpts.AggressiveInlining)]
         public static nuint SizeOf<T>()
             => (nuint)Unsafe.SizeOf<T>();
+
+
+        [MImpl(MImplOpts.AggressiveInlining)]
+        public static void* GodotAlloc(nuint size)
+            => Main.i.MemAlloc(size);
+        [MImpl(MImplOpts.AggressiveInlining)]
+        public static void* GodotRealloc(void* block, nuint size)
+            => Main.i.MemRealloc(block, size);
+        [MImpl(MImplOpts.AggressiveInlining)]
+        public static void GodotFree(void* block)
+            => Main.i.MemFree(block);
+        [MImpl(MImplOpts.AggressiveInlining)]
+        public static T* GodotAlloc<T>(nuint count) where T : unmanaged
+            => (T*)Main.i.MemAlloc(count * (nuint)sizeof(T));
+        [MImpl(MImplOpts.AggressiveInlining)]
+        public static T* GodotRealloc<T>(T* block, nuint count) where T : unmanaged
+            => (T*)Main.i.MemRealloc(block, count * (nuint)sizeof(T));
+        [MImpl(MImplOpts.AggressiveInlining)]
+        public static void GodotFree<T>(T* block) where T : unmanaged
+            => Main.i.MemFree(block);
     }
 }
 
